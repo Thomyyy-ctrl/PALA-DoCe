@@ -1,6 +1,8 @@
 #ifndef FIRMAJUEGO_H_INCLUDED
 #define FIRMAJUEGO_H_INCLUDED
 
+#include"firmaTdaLista.h"
+
 typedef struct
 {
     unsigned MAS_DOS;
