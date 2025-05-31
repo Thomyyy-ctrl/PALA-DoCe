@@ -7,6 +7,6 @@ int main()
     tPlayer jugador={0,0,SIN_EFECTO_NEGATIVO,JUGADOR_HUMANO,"Jony McJony"};
     tJugada movimientoGanador;
     //se empieza la partida con dificultad facil
-    jugarDoce(&jugador,IA_FACIL,&movimientoGanador);
+    jugarDoce(&jugador,IA_MEDIO,&movimientoGanador);
     return 0;
 }

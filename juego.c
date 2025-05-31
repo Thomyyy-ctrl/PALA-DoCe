@@ -73,7 +73,7 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
     mezclarBaraja(&barajaPrincipal);
 
     //seteamos la IA en base a la dificultad seleccionada
-    juegaIA=setearIA(dificultad);
+    juegaIA=setearIA(dificultad,jugadorCpu.nya);
 
     //repartimos las cartas iniciales
     repartirCartasInicial(&barajaPrincipal,&barajaUsadas,manoCpu,manoHumano);
@@ -150,9 +150,10 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
             puts("Carta sin efecto, funcion no implementada");
             break;
         }
-        //se registra la jugada en el historial
+        //se registra la jugada en el historial ( tanto el estado del jugador actual como el de su rival )
         jugada.cartaJugada=*cartaJugada;
-        jugada.jugador=*jugadorActual;
+        jugada.jugadorActual=*jugadorActual;
+        jugada.jugadorRival=*jugadorContrario;
         if(!apilar(&historialJugadas,&jugada,sizeof(tJugada)))
         {
             liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
@@ -209,17 +210,18 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
     if(generarInforme(&historialJugadas)!=TODO_OK_JUEGO)
         puts("Error al generar el informe de la partida");
     liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
+    //aca se podria llamar a la api con el movimiento ganador, o sino devuelvo el movimiento ganador y ya esa llamada se hace afuera
     return TODO_OK_JUEGO;
 }
 
 void mostrarGanador(tJugada *movimientoGanador)
 {
     puts("==============PARTIDA FINALIZADA==================");
-    printf("Ganador: %s con %d puntos en el turno nro %d con la carta %s.\n",movimientoGanador->jugador.nya,movimientoGanador->jugador.puntaje,movimientoGanador->nroTurno,obtenerNombreCarta(movimientoGanador->cartaJugada));
-    if(movimientoGanador->jugador.idPlayer==JUGADOR_IA)
+    printf("Ganador: %s con %d puntos en el turno nro %d con la carta %s.\n",movimientoGanador->jugadorActual.nya,movimientoGanador->jugadorActual.puntaje,movimientoGanador->nroTurno,obtenerNombreCarta(movimientoGanador->cartaJugada));
+    if(movimientoGanador->jugadorActual.idPlayer==JUGADOR_IA)
         puts("==========MAS SUERTE LA PROXIMA :/===============");
     else
-        printf("===========FELICITACIONES %s==============\n\n",movimientoGanador->jugador.nya);
+        printf("===========FELICITACIONES %s==============\n\n",movimientoGanador->jugadorActual.nya);
     system("pause");
     system("cls");
 }
@@ -252,44 +254,18 @@ int generarInforme (tPila *historialJugadas)
         }
     }
     //escribimos el informe
+    //[Turno 1] IA FACIL jugó MAS UNO -> IA: 1 | Jony McJony: 0 | Efecto activo: Ninguno
+
     while(desapilar(&pilaInvertida,&jugadaBuffer,sizeof(tJugada)))
-        fprintf(informe,"TURNO: %d | %s tiro %s | Puntos del jugador: %d | Efectos negativos activos: %s\n",jugadaBuffer.nroTurno,jugadaBuffer.jugador.nya,obtenerNombreCarta(jugadaBuffer.cartaJugada),jugadaBuffer.jugador.puntaje,obtenerNombreCarta(jugadaBuffer.jugador.ultimaCartaNegativaRecibida));
+        fprintf(informe,"[TURNO %d] %s jugo %s -> %s: %d | %s: %d | Efecto Activo: %s\n",jugadaBuffer.nroTurno,
+                jugadaBuffer.jugadorActual.nya,obtenerNombreCarta(jugadaBuffer.cartaJugada),jugadaBuffer.jugadorActual.nya,jugadaBuffer.jugadorActual.puntaje,
+                jugadaBuffer.jugadorRival.nya,jugadaBuffer.jugadorRival.puntaje,obtenerNombreCarta(jugadaBuffer.jugadorActual.ultimaCartaNegativaRecibida));
+    fprintf(informe,"-----------------------------\nGanador: %s | Puntos: %d\nPerdedor: %s | Puntos: %d",jugadaBuffer.jugadorActual.nya,jugadaBuffer.jugadorActual.puntaje,
+            jugadaBuffer.jugadorRival.nya,jugadaBuffer.jugadorRival.puntaje);
     fclose(informe);
     return TODO_OK_JUEGO;
 }
-char puntosUltimoEfectoNegativo (tPila *historialJugadas, tPlayer *jugadorContrario)
-{
-    tJugada jugada;
-    tPila pilaAux;
-    crearPila(&pilaAux);
-    char puntosARestaurar;
-    do
-    {
-        desapilar(historialJugadas,&jugada,sizeof(tJugada));
-        if(!apilar(&pilaAux,&jugada,sizeof(tJugada)))
-        {
-            vaciarPila(&pilaAux);
-            return SIN_MEMORIA_JUEGO;
-        }
-    }
-    while(jugada.jugador.idPlayer!=jugadorContrario->idPlayer&&!pilaVacia(historialJugadas));
-    verTope(&pilaAux,&jugada,sizeof(tJugada));
-    if(jugada.jugador.idPlayer!=jugadorContrario->idPlayer) //significa que no habia puntos para restaurar
-        puntosARestaurar=0;
-    if(jugada.cartaJugada==MENOS_DOS)
-        puntosARestaurar=-1*MENOS_DOS;
-    else if (jugada.cartaJugada==MENOS_UNO)
-        puntosARestaurar=-1*MENOS_UNO;
-    while(desapilar(&pilaAux,&jugada,sizeof(tJugada))) //mientras la pila no este vacia
-    {
-        if(!apilar(historialJugadas,&jugada,sizeof(tJugada))) //si fallo el apilado
-        {
-            vaciarPila(&pilaAux);
-            return SIN_MEMORIA_JUEGO;
-        }
-    }
-    return puntosARestaurar;
-}
+
 int mezclarBaraja(tLista *baraja)
 {
     tLista barajaAux;
@@ -386,7 +362,7 @@ tCarta *juegaHumano (const tPila *historialJugadas, const tPlayer *humano, const
         if(!pilaVacia(historialJugadas))
         {
             verTope(historialJugadas,&ultimaJugada,sizeof(tJugada));
-            printf("Ultima jugada: %s tiro %s\n",ultimaJugada.jugador.nya,obtenerNombreCarta(ultimaJugada.cartaJugada));
+            printf("Ultima jugada: %s tiro %s\n",ultimaJugada.jugadorActual.nya,obtenerNombreCarta(ultimaJugada.cartaJugada));
             if(humano->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
             {
                 printf("Ultima carta negativa recibida: %s\n",obtenerNombreCarta(humano->ultimaCartaNegativaRecibida));
@@ -429,14 +405,24 @@ void mostrarMano(const tCarta *mano)
         mano++;
     }
 }
-tIA setearIA(unsigned char dificultad)
+tIA setearIA(unsigned char dificultad, char *nombreIa)
 {
     switch(dificultad)
     {
     case IA_FACIL:
+    {
+        strcpy(nombreIa,NOMBRE_IA_FACIL);
         return IAFacil;
         break;
+    }
+    case IA_MEDIO:
+    {
+        strcpy(nombreIa,NOMBRE_IA_MEDIO);
+        return IAMedio;
+    }
+    break;
     default:
+        strcpy(nombreIa,NOMBRE_IA_FACIL);
         return IAFacil;
     }
 }
@@ -445,8 +431,8 @@ tCarta* IAFacil(const tPila *historialJugadas, const tPlayer *humano, const tPla
 {
     //devuelve una carta cualquiera de las que tiene en mano
     tJugada ultJugada;
-    tCarta *cartaTirada=mano+numeroAleatorioEnRango(0,2);
-    puts("====================TURNO-IA======================");
+    tCarta *cartaTirada=cartaRandom(mano);
+    printf("====================TURNO-%s======================\n",IA->nya);
     if(!verTope(historialJugadas,&ultJugada,sizeof(tJugada)))
     {
         printf("Nro de movimiento actual: 1\n");
@@ -454,7 +440,7 @@ tCarta* IAFacil(const tPila *historialJugadas, const tPlayer *humano, const tPla
     }
     else
     {
-        printf("Ultima Jugada: %s tiro %s\n",ultJugada.jugador.nya,obtenerNombreCarta(ultJugada.cartaJugada));
+        printf("Ultima Jugada: %s tiro %s\n",ultJugada.jugadorActual.nya,obtenerNombreCarta(ultJugada.cartaJugada));
         if(IA->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
         {
             printf("Ultima carta negativa recibida: %s\n",obtenerNombreCarta(IA->ultimaCartaNegativaRecibida));
@@ -464,22 +450,362 @@ tCarta* IAFacil(const tPila *historialJugadas, const tPlayer *humano, const tPla
     }
     printf("Puntos del jugador Humano: %d\n",humano->puntaje);
     printf("Puntos de la IA: %d\n",IA->puntaje);
-    printf("IA Facil decidio tirar: %s\n",obtenerNombreCarta(*cartaTirada));
+    printf("%s decidio tirar: %s\n",IA->nya,obtenerNombreCarta(*cartaTirada));
     if(*cartaTirada==ESPEJO&&IA->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
         printf("ESPEJO: Se le restaran %d puntos a %s!\nSe le sumaran %d puntos a %s\n",-1*IA->ultimaCartaNegativaRecibida,humano->nya,IA->puntosPreviosAEfectoNegativo-IA->puntaje,IA->nya);
     puts("==========================================");
     return cartaTirada;
 }
 
+tCarta* IAMedio(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano)
+{
+    tJugada ultJugada;
+    //elije la carta
+    tCarta *cartaTirada;
+    unsigned char oponenteCeroPuntos,iaCercaDeGanar,iaPoseeSumarPuntos,iaPoseeNoSacarPuntos,iaPoseeSacarPuntos;
+    //obtenemos la informacion necesaria para tomar la decision
+    oponenteCeroPuntos=humano->puntaje==0?VERDADERO:FALSO;
+    iaCercaDeGanar=IA->puntaje>=MAX_PUNTOS-IA_PUNTOS_CERCA_GANAR?1:0;
+    iaPoseeSumarPuntos=existeTipoDeCartaEnMano(mano,TIPO_POSITIVO);
+    iaPoseeSacarPuntos=existeTipoDeCartaEnMano(mano,TIPO_NEGATIVO);
+    iaPoseeNoSacarPuntos=existeNoTipoDeCartaEnMano(mano,TIPO_NEGATIVO);
+    if(oponenteCeroPuntos==VERDADERO)
+    {
+        if(iaCercaDeGanar==VERDADERO)
+        {
+            if(iaPoseeSumarPuntos==VERDADERO) //tira la carta que mas puntos le sume
+            {
+                cartaTirada=cartaQueSumaMasPuntos(mano);
+            }
+            else
+            {
+                if(iaPoseeNoSacarPuntos==VERDADERO) //tira la primera que no sea de sacar puntos para no desperdiciarla
+                {
+                    cartaTirada=cartaQueNoEsDeTipo(mano,TIPO_NEGATIVO);
+                }
+                else //tira cualquiera
+                {
+                    cartaTirada=cartaRandom(mano);
+                }
+            }
+        }
+        else
+        {
+            if(iaPoseeNoSacarPuntos==VERDADERO) //tira la primera que no sea de sacar puntos para no desperdiciarla
+            {
+                cartaTirada=cartaQueNoEsDeTipo(mano,TIPO_NEGATIVO);
+            }
+            else //tira cualquiera
+            {
+                cartaTirada=cartaRandom(mano);
+            }
+        }
+    }
+    else
+    {
+        if(iaCercaDeGanar==VERDADERO)
+        {
+            if(iaPoseeSumarPuntos==VERDADERO)//tira la carta que mas puntos sume
+            {
+                cartaTirada=cartaQueSumaMasPuntos(mano);
+            }
+            else
+            {
+                if(iaPoseeSacarPuntos==VERDADERO) //tira la carta negativa que mas puntos reste sin desperdiciar puntos
+                {
+                    cartaTirada=cartaNegativaMasAdecuada(mano,humano->puntaje);
+                }
+                else //tira cualquiera
+                {
+                    cartaTirada=cartaRandom(mano);
+                }
+            }
+        }
+        else
+        {
+            if(iaPoseeSacarPuntos==VERDADERO)
+            {
+                cartaTirada=cartaNegativaMasAdecuada(mano,humano->puntaje);
+            }
+            else
+            {
+                cartaTirada=cartaRandom(mano);
+            }
+        }
+    }
+    if(cartaTirada==NULL)
+    {
+        cartaTirada=mano;
+    }
+    printf("====================TURNO-%s======================\n",IA->nya);
+    if(!verTope(historialJugadas,&ultJugada,sizeof(tJugada)))
+    {
+        printf("Nro de movimiento actual: 1\n");
+        puts("Aun no se hicieron jugadas!");
+    }
+    else
+    {
+        printf("Ultima Jugada: %s tiro %s\n",ultJugada.jugadorActual.nya,obtenerNombreCarta(ultJugada.cartaJugada));
+        if(IA->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
+        {
+            printf("Ultima carta negativa recibida: %s\n",obtenerNombreCarta(IA->ultimaCartaNegativaRecibida));
+            printf("Puntos perdidos en esta tanda de turnos por efecto negativo: %d\n",IA->puntosPreviosAEfectoNegativo-IA->puntaje);
+        }
+        printf("Nro de movimiento actual: %d\n",ultJugada.nroTurno+1);
+    }
+    printf("Puntos del jugador Humano: %d\n",humano->puntaje);
+    printf("Puntos de la IA: %d\n",IA->puntaje);
+    printf("%s decidio tirar: %s\n",IA->nya,obtenerNombreCarta(*cartaTirada));
+    if(*cartaTirada==ESPEJO&&IA->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
+        printf("ESPEJO: Se le restaran %d puntos a %s!\nSe le sumaran %d puntos a %s\n",-1*IA->ultimaCartaNegativaRecibida,humano->nya,IA->puntosPreviosAEfectoNegativo-IA->puntaje,IA->nya);
+    puts("==========================================");
+    return cartaTirada;
+}
+
+/* VERSION CON RAZONAMIENTO (mensajes en pantalla) - PARA DEBUGGING
+tCarta* IAMedio(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano)
+{
+    tJugada ultJugada;
+    //elije la carta
+    tCarta *cartaTirada;
+    unsigned char oponenteCeroPuntos,iaCercaDeGanar,iaPoseeSumarPuntos,iaPoseeNoSacarPuntos,iaPoseeSacarPuntos;
+    //obtenemos la informacion necesaria para tomar la decision
+    oponenteCeroPuntos=humano->puntaje==0?VERDADERO:FALSO;
+    iaCercaDeGanar=IA->puntaje>=MAX_PUNTOS-IA_PUNTOS_CERCA_GANAR?1:0;
+    iaPoseeSumarPuntos=existeTipoDeCartaEnMano(mano,TIPO_POSITIVO);
+    iaPoseeSacarPuntos=existeTipoDeCartaEnMano(mano,TIPO_NEGATIVO);
+    iaPoseeNoSacarPuntos=existeNoTipoDeCartaEnMano(mano,TIPO_NEGATIVO);
+    puts("================================================");
+    puts("Mano de la IA: ");
+    mostrarMano(mano);
+    puts("================================================");
+    puts("=========RAZONAMIENTO DE LA IA MEDIO============");
+    if(oponenteCeroPuntos==VERDADERO)
+    {
+        puts("Ia ha detectado que el oponente tiene cero puntos");
+        if(iaCercaDeGanar==VERDADERO)
+        {
+            puts("Ia ha detectado que esta cerca de ganar");
+            if(iaPoseeSumarPuntos==VERDADERO) //tira la carta que mas puntos le sume
+            {
+                puts("Ia ha detectado que tiene cartas de sumar puntos");
+                puts("Ia intento tirar su carta mas positiva");
+                cartaTirada=cartaQueSumaMasPuntos(mano);
+            }
+            else
+            {
+                puts("Ia ha detectado que no posee cartas de sumar puntos");
+                if(iaPoseeNoSacarPuntos==VERDADERO) //tira la primera que no sea de sacar puntos para no desperdiciarla
+                {
+                    puts("Ia ha detectado que posee cartas que no sean de sacar puntos");
+                    puts("Ia intento tirar una carta que no es negativa");
+                    cartaTirada=cartaQueNoEsDeTipo(mano,TIPO_NEGATIVO);
+                }
+                else //tira cualquiera
+                {
+                    puts("Ia ha detectado que no posee cartas que no sean de sacar puntos");
+                    puts("Ia tiro cualquier carta de la mano");
+                    cartaTirada=cartaRandom(mano);
+                }
+            }
+        }
+        else
+        {
+            puts("Ia ha detectado que no esta cerca de ganar");
+            if(iaPoseeNoSacarPuntos==VERDADERO) //tira la primera que no sea de sacar puntos para no desperdiciarla
+            {
+                puts("Ia ha detectado que posee cartas que no son negativas");
+                puts("Ia tiro una carta no negativa para no desperdiciar");
+                cartaTirada=cartaQueNoEsDeTipo(mano,TIPO_NEGATIVO);
+            }
+            else //tira cualquiera
+            {
+                puts("Ia ha detectado que no posee cartas no negativas");
+                puts("Ia tiro cualquier carta de la mano");
+                cartaTirada=cartaRandom(mano);
+            }
+        }
+    }
+    else
+    {
+        puts("Ia ha detectado que el oponente posee puntos");
+        if(iaCercaDeGanar==VERDADERO)
+        {
+            puts("Ia ha detectado que esta cerca de ganar");
+            if(iaPoseeSumarPuntos==VERDADERO)//tira la carta que mas puntos sume
+            {
+                puts("Ia ha detectado que posee cartas de sumar puntos");
+                puts("Ia intento tirar su carta mas positiva");
+                cartaTirada=cartaQueSumaMasPuntos(mano);
+            }
+            else
+            {
+                puts("Ia ha detectado que no posee cartas de sumar puntos");
+                if(iaPoseeSacarPuntos==VERDADERO) //tira la carta negativa que mas puntos reste sin desperdiciar puntos
+                {
+                    puts("Ia ha detectado que posee cartas de sacar puntos");
+                    puts("Ia intento tirar la carta negativa mas adecuada de su mano");
+                    cartaTirada=cartaNegativaMasAdecuada(mano,humano->puntaje);
+                }
+                else //tira cualquiera
+                {
+                    puts("Ia ha detectado que no posee cartas de sacar puntos");
+                    puts("Ia ha decidido tirar cualquier carta");
+                    cartaTirada=cartaRandom(mano);
+                }
+            }
+        }
+        else
+        {
+            puts("Ia ha detectado que no esta cerca de ganar");
+            if(iaPoseeSacarPuntos==VERDADERO)
+            {
+                puts("Ia ha detectado que posee cartas de sacar puntos");
+                puts("Ia ha tirado su carta negativa mas adecuada");
+                cartaTirada=cartaNegativaMasAdecuada(mano,humano->puntaje);
+            }
+            else
+            {
+                puts("Ia ha detectado que no posee cartas de sacar puntos");
+                puts("Ia ha decidido tirar cualquier carta");
+                cartaTirada=cartaRandom(mano);
+            }
+        }
+    }
+    if(cartaTirada==NULL)
+    {
+        puts("Esto no debio haber pasado, hubo algun error.");
+        cartaTirada=mano;
+    }
+    printf("Ia decidio tirar: %s\n",obtenerNombreCarta(*cartaTirada));
+    puts("================================================");
+    printf("====================TURNO-%s======================\n",IA->nya);
+    if(!verTope(historialJugadas,&ultJugada,sizeof(tJugada)))
+    {
+        printf("Nro de movimiento actual: 1\n");
+        puts("Aun no se hicieron jugadas!");
+    }
+    else
+    {
+        printf("Ultima Jugada: %s tiro %s\n",ultJugada.jugadorActual.nya,obtenerNombreCarta(ultJugada.cartaJugada));
+        if(IA->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
+        {
+            printf("Ultima carta negativa recibida: %s\n",obtenerNombreCarta(IA->ultimaCartaNegativaRecibida));
+            printf("Puntos perdidos en esta tanda de turnos por efecto negativo: %d\n",IA->puntosPreviosAEfectoNegativo-IA->puntaje);
+        }
+        printf("Nro de movimiento actual: %d\n",ultJugada.nroTurno+1);
+    }
+    printf("Puntos del jugador Humano: %d\n",humano->puntaje);
+    printf("Puntos de la IA: %d\n",IA->puntaje);
+    printf("%s decidio tirar: %s\n",IA->nya,obtenerNombreCarta(*cartaTirada));
+    if(*cartaTirada==ESPEJO&&IA->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
+        printf("ESPEJO: Se le restaran %d puntos a %s!\nSe le sumaran %d puntos a %s\n",-1*IA->ultimaCartaNegativaRecibida,humano->nya,IA->puntosPreviosAEfectoNegativo-IA->puntaje,IA->nya);
+    puts("==========================================");
+    return cartaTirada;
+}*/
+
+tCarta *cartaNegativaMasAdecuada(tCarta *mano, char puntaje)
+{
+    //dependiendo del puntaje devuelve la direccion de la carta que mas puntos saque sin desperdicio o null si no hay cartas negativas
+    unsigned x;
+    tCarta *masAdecuada=NULL;
+    for(x=0; x<TAM_MANO; x++)
+    {
+        if(cartaEsDeTipo(*mano,TIPO_NEGATIVO)==VERDADERO)
+        {
+            if(masAdecuada==NULL)
+                masAdecuada=mano;
+            else if(puntaje+*mano>=0) ///si bien es una suma, las cartas negativas valen -n, asi que seria una resta
+            {
+                if(puntaje+*mano<puntaje+*masAdecuada)
+                    masAdecuada=mano;
+            }
+        }
+        mano++;
+    }
+    return masAdecuada;
+}
+
+tCarta *cartaRandom(tCarta *mano)
+{
+    return mano+numeroAleatorioEnRango(0,TAM_MANO-1);
+}
+
+tCarta *cartaQueNoEsDeTipo (tCarta *mano, char tipoCarta)
+{
+    //devuelve la direccion de la primera carta de la mano que no sea del tipo especificado, si no encuentra ninguna devuelve NULL
+    unsigned x;
+    for(x=0; x<TAM_MANO; x++)
+    {
+        if(cartaEsDeTipo(*mano,tipoCarta)==FALSO)
+            return mano;
+        mano++;
+    }
+    return NULL;
+}
+
+tCarta *cartaQueSumaMasPuntos(tCarta *mano)
+{
+    //devuelve la direccion a la carta que mas suma puntos que haya dell mano, seria la "MAS POSITIVA" o null si no hay ninguna
+    unsigned x;
+    tCarta *mayorCarta=NULL;
+    for(x=0; x<TAM_MANO; x++)
+    {
+        if(cartaEsDeTipo(*mano,TIPO_POSITIVO)==VERDADERO)
+        {
+            if(mayorCarta==NULL||*mayorCarta<*mano)
+                mayorCarta=mano;
+        }
+        mano++;
+    }
+    return mayorCarta;
+}
+
+unsigned char existeNoTipoDeCartaEnMano (const tCarta *mano, char tipoCarta)
+{
+    //devuelve verdadero si existe al menos una carta en la mano que NO sea del tipo indicado, sino devuelve falso
+    unsigned x;
+    for(x=0; x<TAM_MANO; x++)
+    {
+        if(cartaEsDeTipo(*mano,tipoCarta)==FALSO)
+            return VERDADERO;
+        mano++;
+    }
+    return FALSO;
+}
+
+unsigned char existeTipoDeCartaEnMano (const tCarta *mano, char tipoCarta)
+{
+    //devuelve verdadero si existe al menos una carta en la manoq eu sea del tipo indicado, sino devuelve falso
+    unsigned x;
+    for(x=0; x<TAM_MANO; x++)
+    {
+        if(cartaEsDeTipo(*mano,tipoCarta)==VERDADERO)
+            return VERDADERO;
+        mano++;
+    }
+    return FALSO;
+}
+
+unsigned char cartaEsDeTipo(tCarta carta, char tipoCarta)
+{
+    //clasifica los tipos, devuelve verdadero si la carta pasada es del tipo indicado
+    if(tipoCarta==TIPO_NEGATIVO)
+    {
+        if(carta==MENOS_UNO||carta==MENOS_DOS)
+            return VERDADERO;
+    }
+    else if(tipoCarta==TIPO_POSITIVO)
+    {
+        if(carta==MAS_DOS||carta==MAS_UNO)
+            return VERDADERO;
+    }
+    return FALSO;
+}
+
 int numeroAleatorioEnRango(int minimo, int maximo)
 {
     return rand() % (maximo - minimo + 1) + minimo;
-}
-
-void insertarCartaEnMano(tCarta *mano, const tCarta *cartaAInsertar, unsigned pos)
-{
-    //inserta la carta recibida en la posicion indicada en la mano
-
 }
 
 void mostrarCarta (const void *dato)
