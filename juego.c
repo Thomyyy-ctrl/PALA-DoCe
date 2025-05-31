@@ -457,6 +457,7 @@ tCarta* IAFacil(const tPila *historialJugadas, const tPlayer *humano, const tPla
     return cartaTirada;
 }
 
+//version sin mensajes en pantalla para ver razonamiento
 tCarta* IAMedio(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano)
 {
     tJugada ultJugada;
