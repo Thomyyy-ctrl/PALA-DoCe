@@ -848,6 +848,154 @@ const char *obtenerNombreCarta (tCarta carta)
         break;
     }
 }
+
+//FUNCIÓN NIVEL DIFICIL
+// Función para verificar si existe carta ESPEJO en mano
+unsigned char existeTipoDeCartaEnMano_Espejo(const tCarta *mano) {
+    unsigned x;
+    for (x = 0; x < TAM_MANO; x++) {
+        if (*mano == ESPEJO) {
+            return VERDADERO;
+        }
+        mano++;
+    }
+    return FALSO;
+}
+
+// Función para verificar si existe carta REPETIR_TURNO en mano
+unsigned char existeTipoDeCartaEnMano_RepetirTurno(const tCarta *mano) {
+    unsigned x;
+    for (x = 0; x < TAM_MANO; x++) {
+        if (*mano == REPETIR_TURNO) {
+            return VERDADERO;
+        }
+        mano++;
+    }
+    return FALSO;
+}
+
+// Obtener carta ESPEJO de la mano
+tCarta* obtenerCartaEspejo(tCarta *mano) {
+    unsigned x;
+    for (x = 0; x < TAM_MANO; x++) {
+        if (*mano == ESPEJO) {
+            return mano;
+        }
+        mano++;
+    }
+    return NULL;
+}
+
+// Obtener carta REPETIR_TURNO de la mano
+tCarta* obtenerCartaRepetirTurno(tCarta *mano) {
+    unsigned x;
+    for (x = 0; x < TAM_MANO; x++) {
+        if (*mano == REPETIR_TURNO) {
+            return mano;
+        }
+        mano++;
+    }
+    return NULL;
+}
+
+// Contar cuántas cartas "buenas" tiene en mano para la situación actual
+unsigned char contarCartasBuenas(const tCarta *mano, char puntajeIA, char puntajeOponente) {
+    unsigned x;
+    unsigned char count = 0;
+
+    for (x = 0; x < TAM_MANO; x++) {
+        // Cartas siempre buenas
+        if (*mano == MAS_UNO || *mano == MAS_DOS || *mano == REPETIR_TURNO) {
+            count++;
+        }
+        // ESPEJO es buena si hay efecto negativo pendiente
+        else if (*mano == ESPEJO) {
+            // Asumimos que si llama a esta función, ya verificó si hay efecto negativo
+            count++;
+        }
+        // Cartas negativas son buenas si el oponente tiene puntos
+        else if ((*mano == MENOS_UNO || *mano == MENOS_DOS) && puntajeOponente > 0) {
+            count++;
+        }
+        mano++;
+    }
+
+    return count;
+}
+
+// Encontrar carta que puede hacer ganar inmediatamente
+tCarta* cartaQuePuedeGanar(tCarta *mano, char puntajeActual) {
+    unsigned x;
+    int puntosNecesarios = MAX_PUNTOS - puntajeActual;
+
+    for (x = 0; x < TAM_MANO; x++) {
+        if (*mano == MAS_DOS && puntosNecesarios <= 2) {
+            return mano;
+        }
+        else if (*mano == MAS_UNO && puntosNecesarios <= 1) {
+            return mano;
+        }
+        mano++;
+    }
+
+    return NULL;
+}
+
+// Seleccionar la carta óptima para sumar puntos según la situación
+tCarta* cartaOptimaSumarPuntos(tCarta *mano, char puntajeActual) {
+    unsigned x;
+    tCarta *mejorCarta = NULL;
+    int puntosNecesarios = MAX_PUNTOS - puntajeActual;
+
+    // Si está muy cerca de ganar, priorizar no desperdiciar
+    if (puntosNecesarios <= 2) {
+        // Buscar primero MAS_UNO si solo necesita 1 punto
+        if (puntosNecesarios == 1) {
+            for (x = 0; x < TAM_MANO; x++) {
+                if (*mano == MAS_UNO) {
+                    return mano;
+                }
+                mano++;
+            }
+            // Si no tiene MAS_UNO, usar MAS_DOS
+            mano -= TAM_MANO; // Resetear puntero
+        }
+
+        // Buscar MAS_DOS
+        for (x = 0; x < TAM_MANO; x++) {
+            if (*mano == MAS_DOS) {
+                return mano;
+            }
+            mano++;
+        }
+    }
+
+    // Situación normal: priorizar la carta que más puntos sume
+    return cartaQueSumaMasPuntos(mano);
+}
+
+// Actualizar la función setearIA para incluir IA Difícil
+tIA setearIA_Actualizado(unsigned char dificultad, char *nombreIa) {
+    switch(dificultad) {
+        case IA_FACIL: {
+            strcpy(nombreIa, NOMBRE_IA_FACIL);
+            return IAFacil;
+        }
+        case IA_MEDIO: {
+            strcpy(nombreIa, NOMBRE_IA_MEDIO);
+            return IAMedio;
+        }
+        case IA_DIFICIL: {
+            strcpy(nombreIa, NOMBRE_IA_DIFICIL);  // Necesitas definir esta constante
+            return IADificil;
+        }
+        default:
+            strcpy(nombreIa, NOMBRE_IA_FACIL);
+            return IAFacil;
+    }
+}
+
+
 tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano)
 {
     tJugada ultJugada;
