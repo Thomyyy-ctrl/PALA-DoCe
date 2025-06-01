@@ -1,6 +1,9 @@
 #ifndef FIRMAJUEGO_H_INCLUDED
 #define FIRMAJUEGO_H_INCLUDED
-
+#define IA_DIFICIL 2
+#define NOMBRE_IA_DIFICIL "IA DIFICIL"
+#define TIPO_ESPEJO 3
+#define TIPO_REPETIR_TURNO 4
 #include"firmaTdaLista.h"
 
 typedef struct
