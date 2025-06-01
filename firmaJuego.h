@@ -22,6 +22,7 @@ typedef struct
     char nya[TAM_CAD_PL];
 } tPlayer;
 
-int crearArchivo(const char*path);
 
+tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano);
+int crearArchivo(const char*path);
 #endif // FIRMAJUEGO_H_INCLUDED
