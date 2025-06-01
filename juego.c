@@ -254,7 +254,7 @@ int generarInforme (tPila *historialJugadas)
         }
     }
     //escribimos el informe
-    //[Turno 1] IA FACIL jug� MAS UNO -> IA: 1 | Jony McJony: 0 | Efecto activo: Ninguno
+    //[Turno 1] IA FACIL jugó MAS UNO -> IA: 1 | Jony McJony: 0 | Efecto activo: Ninguno
 
     while(desapilar(&pilaInvertida,&jugadaBuffer,sizeof(tJugada)))
         fprintf(informe,"[TURNO %d] %s jugo %s -> %s: %d | %s: %d | Efecto Activo: %s\n",jugadaBuffer.nroTurno,
@@ -847,4 +847,134 @@ const char *obtenerNombreCarta (tCarta carta)
         return "NO IDENTIFICADO";
         break;
     }
+}
+tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano)
+{
+    tJugada ultJugada;
+    tCarta *cartaTirada = NULL;
+    mostrarMano(mano);
+    // Variables de análisis del estado del juego
+    unsigned char oponenteCeroPuntos = (humano->puntaje == 0) ? VERDADERO : FALSO;
+    unsigned char iaCercaDeGanar = (IA->puntaje >= MAX_PUNTOS - IA_PUNTOS_CERCA_GANAR) ? VERDADERO : FALSO;
+    unsigned char oponenteCercaDeGanar = (humano->puntaje >= MAX_PUNTOS - IA_PUNTOS_CERCA_GANAR) ? VERDADERO : FALSO;
+    unsigned char iaRecibioEfectoNegativo = (IA->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO) ? VERDADERO : FALSO;
+
+    // Análisis de cartas disponibles en mano
+    unsigned char tieneEspejo = existeTipoDeCartaEnMano(mano, TIPO_ESPEJO);
+    unsigned char tieneRepetirTurno = existeTipoDeCartaEnMano(mano, TIPO_REPETIR_TURNO);
+    unsigned char tieneSumarPuntos = existeTipoDeCartaEnMano(mano, TIPO_POSITIVO);
+    unsigned char tieneSacarPuntos = existeTipoDeCartaEnMano(mano, TIPO_NEGATIVO);
+
+    // PRIORIDAD 1: Usar ESPEJO si recibió efecto negativo
+    if (iaRecibioEfectoNegativo && tieneEspejo) {
+        cartaTirada = obtenerCartaEspejo(mano);
+    }
+
+    // PRIORIDAD 2: Si el oponente está cerca de ganar, ser agresivo
+    else if (oponenteCercaDeGanar) {
+        // SIEMPRE usar repetir turno si lo tiene - control total del juego
+        if (tieneRepetirTurno) {
+            cartaTirada = obtenerCartaRepetirTurno(mano);
+        }
+        // Luego sacar puntos al oponente
+        else if (tieneSacarPuntos && !oponenteCeroPuntos) {
+            cartaTirada = cartaNegativaMasAdecuada(mano, humano->puntaje);
+        }
+        // Si no puede ser agresivo, intentar ganar rápido
+        else if (tieneSumarPuntos) {
+            cartaTirada = cartaQueSumaMasPuntos(mano);
+        }
+    }
+
+    // PRIORIDAD 3: Si la IA está cerca de ganar, priorizar victoria
+    else if (iaCercaDeGanar) {
+        // Intentar ganar inmediatamente
+        if (tieneSumarPuntos) {
+            tCarta *mejorCarta = cartaQuePuedeGanar(mano, IA->puntaje);
+            if (mejorCarta != NULL) {
+                cartaTirada = mejorCarta;
+            } else {
+                cartaTirada = cartaQueSumaMasPuntos(mano);
+            }
+        }
+        // Si no puede ganar directamente, usar REPETIR_TURNO para más oportunidades
+        else if (tieneRepetirTurno) {
+            cartaTirada = obtenerCartaRepetirTurno(mano);
+        }
+        // Evitar desperdiciar cartas negativas
+        else if (!oponenteCeroPuntos && tieneSacarPuntos) {
+            cartaTirada = cartaNegativaMasAdecuada(mano, humano->puntaje);
+        }
+    }
+
+    // PRIORIDAD 4: Juego estratégico normal
+    else {
+        // NUEVA LÓGICA: Si el oponente tiene puntos y la IA tiene REPETIR_TURNO, usarlo para mantener control
+        if (tieneRepetirTurno && humano->puntaje > 0 && (tieneSumarPuntos || tieneSacarPuntos)) {
+            cartaTirada = obtenerCartaRepetirTurno(mano);
+        }
+        // Si oponente tiene 0 puntos, no desperdiciar cartas negativas
+        else if (oponenteCeroPuntos) {
+            if (tieneSumarPuntos) {
+                cartaTirada = cartaOptimaSumarPuntos(mano, IA->puntaje);
+            }
+            else if (tieneRepetirTurno) {
+                cartaTirada = obtenerCartaRepetirTurno(mano);
+            }
+            else {
+                // Evitar cartas negativas
+                cartaTirada = cartaQueNoEsDeTipo(mano, TIPO_NEGATIVO);
+            }
+        }
+        // Juego normal - PRIORIZAR REPETIR TURNO si tiene cartas útiles
+        else {
+            // Si tiene REPETIR_TURNO y al menos una carta útil adicional, usarlo
+            if (tieneRepetirTurno && (tieneSacarPuntos || tieneSumarPuntos)) {
+                cartaTirada = obtenerCartaRepetirTurno(mano);
+            }
+            // Luego priorizar sacar puntos al oponente
+            else if (tieneSacarPuntos) {
+                cartaTirada = cartaNegativaMasAdecuada(mano, humano->puntaje);
+            }
+            // Luego sumar puntos propios
+            else if (tieneSumarPuntos) {
+                cartaTirada = cartaOptimaSumarPuntos(mano, IA->puntaje);
+            }
+            // Último recurso: REPETIR_TURNO aunque no tenga cartas muy útiles
+            else if (tieneRepetirTurno) {
+                cartaTirada = obtenerCartaRepetirTurno(mano);
+            }
+        }
+    }
+
+    // Fallback: si no se seleccionó ninguna carta por algún error lógico
+    if (cartaTirada == NULL) {
+        cartaTirada = mano; // Primera carta disponible
+    }
+
+    // Mostrar información del turno (similar a las otras IAs)
+    printf("====================TURNO-%s======================\n", IA->nya);
+    if (!verTope(historialJugadas, &ultJugada, sizeof(tJugada))) {
+        printf("Nro de movimiento actual: 1\n");
+        puts("Aun no se hicieron jugadas!");
+    }
+    else {
+        printf("Ultima Jugada: %s tiro %s\n", ultJugada.jugadorActual.nya, obtenerNombreCarta(ultJugada.cartaJugada));
+        if (IA->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO) {
+            printf("Ultima carta negativa recibida: %s\n", obtenerNombreCarta(IA->ultimaCartaNegativaRecibida));
+            printf("Puntos perdidos en esta tanda de turnos por efecto negativo: %d\n", IA->puntosPreviosAEfectoNegativo - IA->puntaje);
+        }
+        printf("Nro de movimiento actual: %d\n", ultJugada.nroTurno + 1);
+    }
+    printf("Puntos del jugador Humano: %d\n", humano->puntaje);
+    printf("Puntos de la IA: %d\n", IA->puntaje);
+    printf("%s decidio tirar: %s\n", IA->nya, obtenerNombreCarta(*cartaTirada));
+    if (*cartaTirada == ESPEJO && IA->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO) {
+        printf("ESPEJO: Se le restaran %d puntos a %s!\nSe le sumaran %d puntos a %s\n",
+               -1 * IA->ultimaCartaNegativaRecibida, humano->nya,
+               IA->puntosPreviosAEfectoNegativo - IA->puntaje, IA->nya);
+    }
+    puts("==========================================");
+
+    return cartaTirada;
 }
