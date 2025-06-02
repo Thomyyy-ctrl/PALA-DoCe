@@ -134,18 +134,107 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
             repetirTurno=1;
         }
         break;
+//        case ESPEJO:
+//        {
+//            if(jugadorActual->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
+//            {
+//                if(jugadorActual->puntaje < jugadorActual->puntosPreviosAEfectoNegativo)
+//                    jugadorActual->puntaje=jugadorActual->puntosPreviosAEfectoNegativo;
+//                jugadorContrario->puntaje+=jugadorActual->ultimaCartaNegativaRecibida;
+//                if(jugadorContrario->puntaje<0)
+//                    jugadorContrario->puntaje=0;
+//            }
+//        }
+//        break;
+
+
+
+
         case ESPEJO:
         {
-            if(jugadorActual->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
+            if(jugadorActual->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO)
             {
-                if(jugadorActual->puntaje!=jugadorActual->puntosPreviosAEfectoNegativo)
-                    jugadorActual->puntaje=jugadorActual->puntosPreviosAEfectoNegativo;
-                jugadorContrario->puntaje+=jugadorActual->ultimaCartaNegativaRecibida;
-                if(jugadorContrario->puntaje<0)
-                    jugadorContrario->puntaje=0;
+                tCarta efectoAReflejar = jugadorActual->ultimaCartaNegativaRecibida;
+
+                printf("¡ESPEJO ACTIVADO! %s refleja %s hacia %s\n",
+                       jugadorActual->nya,
+                       obtenerNombreCarta(efectoAReflejar),
+                       jugadorContrario->nya);
+
+                // Restaurar puntos del jugador que usa ESPEJO
+                if(jugadorActual->puntaje < jugadorActual->puntosPreviosAEfectoNegativo)
+                {
+                    printf("%s recupera %d puntos (de %d a %d)\n",
+                           jugadorActual->nya,
+                           jugadorActual->puntosPreviosAEfectoNegativo - jugadorActual->puntaje,
+                           jugadorActual->puntaje,
+                           jugadorActual->puntosPreviosAEfectoNegativo);
+                    jugadorActual->puntaje = jugadorActual->puntosPreviosAEfectoNegativo;
+                }
+
+                // Preparar al oponente para recibir el efecto reflejado
+                jugadorContrario->puntosPreviosAEfectoNegativo = jugadorContrario->puntaje;
+                jugadorContrario->ultimaCartaNegativaRecibida = efectoAReflejar;
+
+                // Aplicar el efecto reflejado al oponente
+                switch(efectoAReflejar)
+                {
+                    case MENOS_UNO:
+                        jugadorContrario->puntaje--;
+                        if(jugadorContrario->puntaje < 0) jugadorContrario->puntaje = 0;
+                        printf("%s pierde 1 punto por el ESPEJO reflejado (puntos: %d)\n",
+                               jugadorContrario->nya, jugadorContrario->puntaje);
+                        break;
+
+                    case MENOS_DOS:
+                        jugadorContrario->puntaje -= 2;
+                        if(jugadorContrario->puntaje < 0) jugadorContrario->puntaje = 0;
+                        printf("%s pierde 2 puntos por el ESPEJO reflejado (puntos: %d)\n",
+                               jugadorContrario->nya, jugadorContrario->puntaje);
+                        break;
+                }
+
+                printf("¡Ahora %s puede usar ESPEJO para devolver el efecto!\n", jugadorContrario->nya);
+
+                // Limpiar el efecto del jugador que usó ESPEJO
+                jugadorActual->ultimaCartaNegativaRecibida = SIN_EFECTO_NEGATIVO;
+            }
+            else
+            {
+                printf("%s usó ESPEJO pero no hay efecto negativo para reflejar\n", jugadorActual->nya);
+                // La carta se usa igual, simplemente no hace nada
             }
         }
         break;
+
+        // Modificación en el cambio de turno - agregar solo UNA línea
+        if(!repetirTurno)
+        {
+            // NUEVA LÍNEA: Solo limpiar si no es ESPEJO para permitir cadenas
+            if(jugadorActual->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO)
+            {
+                // Si el jugador no usó ESPEJO en su turno, el efecto expira
+                // (esto evita que los efectos duren para siempre)
+            }
+
+            if(jugadorActual->idPlayer==JUGADOR_IA)
+            {
+                jugadorActual=jugadorHumano;
+                jugadorContrario=&jugadorCpu;
+                manoActual=manoHumano;
+            }
+            else
+            {
+                jugadorActual=&jugadorCpu;
+                jugadorContrario=jugadorHumano;
+                manoActual=manoCpu;
+            }
+        }
+
+
+
+
+
         default:
             puts("Carta sin efecto, funcion no implementada");
             break;
@@ -1170,4 +1259,14 @@ tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tP
     puts("==========================================");
 
     return cartaTirada;
+}
+
+void mostrarOpcionEspejo(const tPlayer *jugador)
+{
+    if(jugador->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO)
+    {
+        printf("*** %s puede usar ESPEJO para reflejar %s ***\n",
+               jugador->nya,
+               obtenerNombreCarta(jugador->ultimaCartaNegativaRecibida));
+    }
 }
