@@ -75,6 +75,7 @@ tIA setearIA(unsigned char dificultad, char *nombreIa);
 tCarta* IAFacil(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano);
 tCarta* IAMedio(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano);
 tCarta *juegaHumano (const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano);
+void mostrarOpcionEspejo(const tPlayer *jugador);
 int numeroAleatorioEnRango(int minimo, int maximo);
 void repartirCartasInicial (tLista *barajaPrincipal,tLista *barajaUsadas, tCarta *manoCpu, tCarta *manoHumano);
 const char *obtenerNombreCarta (tCarta carta);
