@@ -175,7 +175,7 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
             if(jugadorActual->puntaje>=MAX_PUNTOS)
             {
                 mostrarTablero(manoHumano,manoCpu,&jugada.cartaJugada,jugada);
-                Sleep(2000);
+                Sleep(1000);
             }
             else
             {
