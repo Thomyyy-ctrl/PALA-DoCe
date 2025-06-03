@@ -1,12 +1,24 @@
 #include <stdio.h>
-#include <string.h>
-#include "firmaJuego.h"
-int main()
+#include <stdlib.h>
+#include "firmaUtilitarias.h"
+#include "firmaConexion.h"
+
+int main(int arg,char** arg2)
 {
-    //simulo que ya se cargo el jugador
-    tPlayer jugador={0,0,SIN_EFECTO_NEGATIVO,JUGADOR_HUMANO,"Jony McJony"};
-    tJugada movimientoGanador;
-    //se empieza la partida con dificultad facil
-    jugarDoce(&jugador,IA_DIFICIL,&movimientoGanador);
-    return 0;
+    tConfigApi configuracion;
+    srand(time(NULL));
+
+    if(arg!=2)
+        return ERROR;
+
+    if(!obtenerConfiguracionApi(arg2[ARCHIVO_CONFIG],&configuracion))
+        return ERROR;
+
+    while(menu(&configuracion))
+    {
+        system("cls");
+    }
+    system("cls");
+
+    return TODO_OK;
 }

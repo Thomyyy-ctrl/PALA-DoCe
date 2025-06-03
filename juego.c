@@ -1,4 +1,6 @@
 #include"firmaJuego.h"
+#include "firmaUtilitarias.h"
+#include "firmaConexion.h"
 int crearArchivo(const char*path)
 {
     tCarta card[] =  ///6 de +2
@@ -46,7 +48,7 @@ int bajarArchLista(const char* path, tLista *pl)
     return 1;
 }
 
-int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimientoGanador)
+int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimientoGanador,tConfigApi* configuracion)
 {
     //deberia recibir el jugador con su nombre, tipo de jugador (HUMANO) seteado, y puntaje en 0
     //dificultad es un unsigned char que representa el nivel de la IA, 0 facil, 1 medio, 2 dificil (definido por macro)
@@ -58,8 +60,6 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
     tPila historialJugadas;
     tPlayer jugadorCpu= {0,0,SIN_EFECTO_NEGATIVO,JUGADOR_IA,"IA"};
     tPlayer *jugadorActual=NULL,*jugadorContrario=NULL;
-    //seteamos el generador de numeros random
-    srand(time(NULL));
     //creamos las dos barajas principales
     crearLista(&barajaPrincipal);
     crearLista(&barajaUsadas);
@@ -67,7 +67,7 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
     crearPila(&historialJugadas);
 
     //esto de crearElArchivo en realidad seria del main creeria...
-    crearArchivo(PATH_CARTAS);
+    //crearArchivo(PATH_CARTAS);
     if(!bajarArchLista(PATH_CARTAS,&barajaPrincipal))
         return ERROR_ARCH_CARTAS;
     mezclarBaraja(&barajaPrincipal);
@@ -91,13 +91,16 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
     }
     //indicamos el numero de jugada
     jugada.nroTurno=1;
+    jugada.jugadorActual.puntaje=0;
+    jugada.jugadorRival.puntaje=0;
     while(jugadorCpu.puntaje<MAX_PUNTOS&&jugadorHumano->puntaje<MAX_PUNTOS)
     {
         //se realiza la jugada
         if(jugadorActual->idPlayer==JUGADOR_HUMANO)
-            cartaJugada=juegaHumano(&historialJugadas,jugadorHumano,&jugadorCpu,manoHumano);
+            cartaJugada=juegaHumano(&historialJugadas,jugadorHumano,&jugadorCpu,manoHumano,manoCpu,jugada);
         else
-            cartaJugada=juegaIA(&historialJugadas,jugadorHumano,&jugadorCpu,manoCpu);
+            cartaJugada=juegaIA(&historialJugadas,jugadorHumano,&jugadorCpu,manoCpu,manoHumano,jugada);
+
         //se aplica el efecto
         switch(*cartaJugada)
         {
@@ -134,107 +137,18 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
             repetirTurno=1;
         }
         break;
-//        case ESPEJO:
-//        {
-//            if(jugadorActual->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
-//            {
-//                if(jugadorActual->puntaje < jugadorActual->puntosPreviosAEfectoNegativo)
-//                    jugadorActual->puntaje=jugadorActual->puntosPreviosAEfectoNegativo;
-//                jugadorContrario->puntaje+=jugadorActual->ultimaCartaNegativaRecibida;
-//                if(jugadorContrario->puntaje<0)
-//                    jugadorContrario->puntaje=0;
-//            }
-//        }
-//        break;
-
-
-
-
         case ESPEJO:
         {
-            if(jugadorActual->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO)
+            if(jugadorActual->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
             {
-                tCarta efectoAReflejar = jugadorActual->ultimaCartaNegativaRecibida;
-
-                printf("¡ESPEJO ACTIVADO! %s refleja %s hacia %s\n",
-                       jugadorActual->nya,
-                       obtenerNombreCarta(efectoAReflejar),
-                       jugadorContrario->nya);
-
-                // Restaurar puntos del jugador que usa ESPEJO
-                if(jugadorActual->puntaje < jugadorActual->puntosPreviosAEfectoNegativo)
-                {
-                    printf("%s recupera %d puntos (de %d a %d)\n",
-                           jugadorActual->nya,
-                           jugadorActual->puntosPreviosAEfectoNegativo - jugadorActual->puntaje,
-                           jugadorActual->puntaje,
-                           jugadorActual->puntosPreviosAEfectoNegativo);
-                    jugadorActual->puntaje = jugadorActual->puntosPreviosAEfectoNegativo;
-                }
-
-                // Preparar al oponente para recibir el efecto reflejado
-                jugadorContrario->puntosPreviosAEfectoNegativo = jugadorContrario->puntaje;
-                jugadorContrario->ultimaCartaNegativaRecibida = efectoAReflejar;
-
-                // Aplicar el efecto reflejado al oponente
-                switch(efectoAReflejar)
-                {
-                    case MENOS_UNO:
-                        jugadorContrario->puntaje--;
-                        if(jugadorContrario->puntaje < 0) jugadorContrario->puntaje = 0;
-                        printf("%s pierde 1 punto por el ESPEJO reflejado (puntos: %d)\n",
-                               jugadorContrario->nya, jugadorContrario->puntaje);
-                        break;
-
-                    case MENOS_DOS:
-                        jugadorContrario->puntaje -= 2;
-                        if(jugadorContrario->puntaje < 0) jugadorContrario->puntaje = 0;
-                        printf("%s pierde 2 puntos por el ESPEJO reflejado (puntos: %d)\n",
-                               jugadorContrario->nya, jugadorContrario->puntaje);
-                        break;
-                }
-
-                printf("¡Ahora %s puede usar ESPEJO para devolver el efecto!\n", jugadorContrario->nya);
-
-                // Limpiar el efecto del jugador que usó ESPEJO
-                jugadorActual->ultimaCartaNegativaRecibida = SIN_EFECTO_NEGATIVO;
-            }
-            else
-            {
-                printf("%s usó ESPEJO pero no hay efecto negativo para reflejar\n", jugadorActual->nya);
-                // La carta se usa igual, simplemente no hace nada
+                if(jugadorActual->puntaje!=jugadorActual->puntosPreviosAEfectoNegativo)
+                    jugadorActual->puntaje=jugadorActual->puntosPreviosAEfectoNegativo;
+                jugadorContrario->puntaje+=jugadorActual->ultimaCartaNegativaRecibida;
+                if(jugadorContrario->puntaje<0)
+                    jugadorContrario->puntaje=0;
             }
         }
         break;
-
-        // Modificación en el cambio de turno - agregar solo UNA línea
-        if(!repetirTurno)
-        {
-            // NUEVA LÍNEA: Solo limpiar si no es ESPEJO para permitir cadenas
-            if(jugadorActual->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO)
-            {
-                // Si el jugador no usó ESPEJO en su turno, el efecto expira
-                // (esto evita que los efectos duren para siempre)
-            }
-
-            if(jugadorActual->idPlayer==JUGADOR_IA)
-            {
-                jugadorActual=jugadorHumano;
-                jugadorContrario=&jugadorCpu;
-                manoActual=manoHumano;
-            }
-            else
-            {
-                jugadorActual=&jugadorCpu;
-                jugadorContrario=jugadorHumano;
-                manoActual=manoCpu;
-            }
-        }
-
-
-
-
-
         default:
             puts("Carta sin efecto, funcion no implementada");
             break;
@@ -256,6 +170,38 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
         }
         //marcamos la carta jugada como usada
         *cartaJugada=CARTA_USADA;
+        if(jugadorActual == &jugadorCpu)
+        {
+            if(jugadorActual->puntaje>=MAX_PUNTOS)
+            {
+                mostrarTablero(manoHumano,manoCpu,&jugada.cartaJugada,jugada);
+                Sleep(2000);
+            }
+            else
+            {
+                mostrarTablero(manoHumano,manoCpu,&jugada.cartaJugada,jugada);
+                printf("\n\t  La IA ROBA UNA CARTA...");
+                Sleep(2000);
+            }
+
+        }
+        else
+        {
+            if(jugadorActual->puntaje>=MAX_PUNTOS)
+            {
+                mostrarTablero(manoHumano,manoCpu,&jugada.cartaJugada,jugada);
+                Sleep(2000);
+            }
+            else
+            {
+                mostrarTablero(manoHumano,manoCpu,&jugada.cartaJugada,jugada);
+                fflush(stdin);
+                printf("\n\t  PRESIONA ENTER PARA ROBAR UNA CARTA...");
+                getchar();
+            }
+
+        }
+
         //reponemos la carta en la mano del jugador que tiro recien
         if(reponerCarta(manoActual,&barajaPrincipal)==BARAJA_VACIA)
         {
@@ -293,24 +239,29 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
         //aumentamos el turno
         jugada.nroTurno++;
     }
+
     //guardamos el movimiento ganador para devolverlo
     verTope(&historialJugadas,movimientoGanador,sizeof(tJugada));
     mostrarGanador(movimientoGanador);
     if(generarInforme(&historialJugadas)!=TODO_OK_JUEGO)
         puts("Error al generar el informe de la partida");
     liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
-    //aca se podria llamar a la api con el movimiento ganador, o sino devuelvo el movimiento ganador y ya esa llamada se hace afuera
+
+    //Subo el resultado de la partida del jugador contra la IA
+    enviarDatosJSON(movimientoGanador,configuracion);
+
     return TODO_OK_JUEGO;
 }
 
 void mostrarGanador(tJugada *movimientoGanador)
 {
-    puts("==============PARTIDA FINALIZADA==================");
-    printf("Ganador: %s con %d puntos en el turno nro %d con la carta %s.\n",movimientoGanador->jugadorActual.nya,movimientoGanador->jugadorActual.puntaje,movimientoGanador->nroTurno,obtenerNombreCarta(movimientoGanador->cartaJugada));
+    system("cls");
+    printf("\n\t     ==============PARTIDA FINALIZADA==================\n");
+    printf("\n\t Ganador: %s con %d puntos en el turno nro %d con la carta %s.\n",movimientoGanador->jugadorActual.nya,movimientoGanador->jugadorActual.puntaje,movimientoGanador->nroTurno,obtenerNombreCarta(movimientoGanador->cartaJugada));
     if(movimientoGanador->jugadorActual.idPlayer==JUGADOR_IA)
-        puts("==========MAS SUERTE LA PROXIMA :/===============");
+        printf("\n\t     ==========MAS SUERTE LA PROXIMA (:/)==============\n\n\n\n");
     else
-        printf("===========FELICITACIONES %s==============\n\n",movimientoGanador->jugadorActual.nya);
+        printf("\n\t     =============FELICITACIONES %s==============\n\n\n\n",movimientoGanador->jugadorActual.nya);
     system("pause");
     system("cls");
 }
@@ -355,80 +306,35 @@ int generarInforme (tPila *historialJugadas)
     return TODO_OK_JUEGO;
 }
 
-//int mezclarBaraja(tLista *baraja)
-//{
-//    tLista barajaAux;
-//    tCarta bufferCarta;
-//    unsigned mezclas=3,x,y; //a mayor numero mejor mezclado queda pero mas procesamiento es requerido
-//    crearLista(&barajaAux);
-//    for(x=0; x<mezclas; x++)
-//    {
-//        for(y=0; y<TAM_BARAJA; y++)
-//        {
-//            if(numeroAleatorioEnRango(0,1)==0)
-//                sacarPrimero(baraja,&bufferCarta,sizeof(tCarta));
-//            else
-//                sacarUltimo(baraja,&bufferCarta,sizeof(tCarta));
-//            if(!insertarAlInicio(&barajaAux,&bufferCarta,sizeof(tCarta)))
-//            {
-//                vaciarLista(&barajaAux);
-//                return SIN_MEMORIA_JUEGO;
-//            }
-//        }
-//        if(!reponerBarajaPrincipal(baraja,&barajaAux))
-//        {
-//            vaciarLista(&barajaAux);
-//            return SIN_MEMORIA_JUEGO;
-//        }
-//    }
-//    return TODO_OK_JUEGO;
-//}
-
-///MENSAJE EXPLICATIVO: Básicamente se me ocurrió en vez de dejarlo en un 50%
-///Las probabilidades de insercción, lo llevé a un 33% para tener mayor variacion
-///Sin generar tanto overhead, podríamos haberlo hecho con un limite decreciente en base
-///a que sabemos que tenemos 40 nodos(cartas) y podiamos ir insertando por posición
-///Pero me resultó más óptimo y con un menor overhead esta versión :)
 int mezclarBaraja(tLista *baraja)
 {
     tLista barajaAux;
     tCarta bufferCarta;
-    unsigned x, decision;
+    unsigned mezclas=3,x,y; //a mayor numero mejor mezclado queda pero mas procesamiento es requerido
     crearLista(&barajaAux);
-    // Una sola pasada, más eficiente que las 3 originales
-    for(x = 0; x < TAM_BARAJA; x++)
+    for(x=0; x<mezclas; x++)
     {
-        // Generamos un número entre 0 y 5 para más variabilidad
-        decision = numeroAleatorioEnRango(0, 5);
-        // Extraemos de diferentes formas según la decisión
-        if(decision <= 2)  // 50% probabilidad (0,1,2)
-            sacarPrimero(baraja, &bufferCarta, sizeof(tCarta));
-        else  // 50% probabilidad (3,4,5)
-            sacarUltimo(baraja, &bufferCarta, sizeof(tCarta));
-
-        // Insertamos también de forma variada
-        if(decision % 3 == 0)  // 33% probabilidad (0,3)
-            insertarAlInicio(&barajaAux, &bufferCarta, sizeof(tCarta));
-        else  // 66% probabilidad (1,2,4,5)
-            insertarAlFinal(&barajaAux, &bufferCarta, sizeof(tCarta));
-
-        // Verificación de memoria simplificada
-        if(!listaVacia(baraja) && listaVacia(&barajaAux))
+        for(y=0; y<TAM_BARAJA; y++)
+        {
+            if(numeroAleatorioEnRango(0,1)==0)
+                sacarPrimero(baraja,&bufferCarta,sizeof(tCarta));
+            else
+                sacarUltimo(baraja,&bufferCarta,sizeof(tCarta));
+            if(!insertarAlInicio(&barajaAux,&bufferCarta,sizeof(tCarta)))
+            {
+                vaciarLista(&barajaAux);
+                return SIN_MEMORIA_JUEGO;
+            }
+        }
+        if(!reponerBarajaPrincipal(baraja,&barajaAux))
         {
             vaciarLista(&barajaAux);
             return SIN_MEMORIA_JUEGO;
         }
     }
-
-    // Devolvemos las cartas a la baraja original
-    if(!reponerBarajaPrincipal(baraja, &barajaAux))
-    {
-        vaciarLista(&barajaAux);
-        return SIN_MEMORIA_JUEGO;
-    }
-
     return TODO_OK_JUEGO;
 }
+
 
 void liberarMemoriaEstructuras (tLista *barajaPrincipal, tLista *barajaUsadas, tPila *historialJugadas)
 {
@@ -482,61 +388,26 @@ void repartirCartasInicial (tLista *barajaPrincipal,tLista *barajaUsadas, tCarta
     }
 }
 
-tCarta *juegaHumano (const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano)
+tCarta *juegaHumano (const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano,tCarta* manoIA, tJugada jugada)
 {
-    //esto seria reemplazado por la UI que se haga, pero para testing rapido va, lo importante es que me devuelva
-    //un puntero a la carta que se va a jugar
     tJugada ultimaJugada;
+    tCarta cartaJugada={'0'};
     int opcion;
-    do
+    if(!pilaVacia(historialJugadas))
     {
-        printf("================TURNO-%s==================\n",humano->nya);
-        printf("Puntos de la IA: %d\n",IA->puntaje);
-        printf("Puntos del jugador: %d\n",humano->puntaje);
-
-        // Usar en la función juegaHumano - agregar después de mostrar puntos:
-        if(humano->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO)
-        {
-            printf("*** PUEDES USAR ESPEJO PARA REFLEJAR %s ***\n",
-                   obtenerNombreCarta(humano->ultimaCartaNegativaRecibida));
-        }
-
-
-        if(!pilaVacia(historialJugadas))
-        {
-            verTope(historialJugadas,&ultimaJugada,sizeof(tJugada));
-            printf("Ultima jugada: %s tiro %s\n",ultimaJugada.jugadorActual.nya,obtenerNombreCarta(ultimaJugada.cartaJugada));
-            if(humano->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
-            {
-                printf("Ultima carta negativa recibida: %s\n",obtenerNombreCarta(humano->ultimaCartaNegativaRecibida));
-                printf("Puntos perdidos en esta tanda de turnos por efecto negativo: %d\n",humano->puntosPreviosAEfectoNegativo-humano->puntaje);
-            }
-            printf("Nro de movimiento actual: %d\n",ultimaJugada.nroTurno+1);
-        }
-        else
-        {
-            printf("Nro de movimiento actual: 1\n");
-            puts("Aun no se hicieron jugadas!");
-        }
-        puts("--------------------------------------");
-        puts("Cartas Disponibles: ");
-        mostrarMano(mano);
-        puts("--------------------------------------");
-        printf("Ingrese su jugada: ");
-        scanf("%d",&opcion);
-        if(opcion<1||opcion>TAM_MANO)
-        {
-            printf("Elija una opcion valida (1 a 3)\n");
-            fflush(stdin);
-            system("pause");
-            system("cls");
-        }
+        verTope(historialJugadas,&ultimaJugada,sizeof(tJugada));
+        mostrarTablero(mano,manoIA,&ultimaJugada.cartaJugada,jugada);
     }
-    while(opcion<1||opcion>3);
-    if(*(mano+(opcion-1))==ESPEJO&&humano->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
-        printf("ESPEJO: Se le restaran %d puntos a %s!\nSe le sumaran %d puntos a %s\n",-1*humano->ultimaCartaNegativaRecibida,IA->nya,humano->puntosPreviosAEfectoNegativo-humano->puntaje,humano->nya);
-    system("pause");
-    system("cls");
+    else
+        mostrarTablero(mano,manoIA,&cartaJugada,jugada);
+    printf("\n\t     ================TURNO-%s==================\n\n",humano->nya);
+    printf("\n(SELECCIONAR LAS CARTAS CON EL MOUSE)");
+
+    opcion=obtenerCartaDeLaMano();
+
+//    if(*(mano+(opcion-1))==ESPEJO && humano->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
+//        printf("ESPEJO: Se le restaran %d puntos a %s!\nSe le sumaran %d puntos a %s\n",-1*humano->ultimaCartaNegativaRecibida,IA->nya,humano->puntosPreviosAEfectoNegativo-humano->puntaje,humano->nya);
+    printf("\n");
     return mano+(opcion-1);
 }
 void mostrarMano(const tCarta *mano)
@@ -548,84 +419,54 @@ void mostrarMano(const tCarta *mano)
         mano++;
     }
 }
-//tIA setearIA(unsigned char dificultad, char *nombreIa)
-//{
-//    switch(dificultad)
-//    {
-//    case IA_FACIL:
-//    {
-//        strcpy(nombreIa,NOMBRE_IA_FACIL);
-//        return IAFacil;
-//        break;
-//    }
-//    case IA_MEDIO:
-//    {
-//        strcpy(nombreIa,NOMBRE_IA_MEDIO);
-//        return IAMedio;
-//    }
-//    break;
-//    default:
-//        strcpy(nombreIa,NOMBRE_IA_FACIL);
-//        return IAFacil;
-//    }
-//}
-
 tIA setearIA(unsigned char dificultad, char *nombreIa)
 {
     switch(dificultad)
     {
     case IA_FACIL:
-        strcpy(nombreIa, NOMBRE_IA_FACIL);
+    {
+        strcpy(nombreIa,NOMBRE_IA_FACIL);
         return IAFacil;
         break;
+    }
     case IA_MEDIO:
-        strcpy(nombreIa, NOMBRE_IA_MEDIO);
+    {
+        strcpy(nombreIa,NOMBRE_IA_MEDIO);
         return IAMedio;
-        break;
-    case IA_DIFICIL:  // <- AGREGAR ESTE CASO
-        strcpy(nombreIa, NOMBRE_IA_DIFICIL);
-        return IADificil;
-        break;
+    }
+    break;
     default:
-        strcpy(nombreIa, NOMBRE_IA_FACIL);
+        strcpy(nombreIa,NOMBRE_IA_FACIL);
         return IAFacil;
     }
 }
 
-tCarta* IAFacil(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano)
+tCarta* IAFacil(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano,tCarta*manoJugador ,tJugada jugada)
 {
     //devuelve una carta cualquiera de las que tiene en mano
     tJugada ultJugada;
+    tCarta ultCartaJugada={'0'};
     tCarta *cartaTirada=cartaRandom(mano);
-    printf("====================TURNO-%s======================\n",IA->nya);
     if(!verTope(historialJugadas,&ultJugada,sizeof(tJugada)))
     {
-        printf("Nro de movimiento actual: 1\n");
-        puts("Aun no se hicieron jugadas!");
+        mostrarTablero(manoJugador,mano,&ultCartaJugada,jugada);
     }
     else
     {
-        printf("Ultima Jugada: %s tiro %s\n",ultJugada.jugadorActual.nya,obtenerNombreCarta(ultJugada.cartaJugada));
-        if(IA->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
-        {
-            printf("Ultima carta negativa recibida: %s\n",obtenerNombreCarta(IA->ultimaCartaNegativaRecibida));
-            printf("Puntos perdidos en esta tanda de turnos por efecto negativo: %d\n",IA->puntosPreviosAEfectoNegativo-IA->puntaje);
-        }
-        printf("Nro de movimiento actual: %d\n",ultJugada.nroTurno+1);
+        mostrarTablero(manoJugador,mano,&ultJugada.cartaJugada,jugada);
     }
-    printf("Puntos del jugador Humano: %d\n",humano->puntaje);
-    printf("Puntos de la IA: %d\n",IA->puntaje);
-    printf("%s decidio tirar: %s\n",IA->nya,obtenerNombreCarta(*cartaTirada));
-    if(*cartaTirada==ESPEJO&&IA->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
-        printf("ESPEJO: Se le restaran %d puntos a %s!\nSe le sumaran %d puntos a %s\n",-1*IA->ultimaCartaNegativaRecibida,humano->nya,IA->puntosPreviosAEfectoNegativo-IA->puntaje,IA->nya);
-    puts("==========================================");
+
+//    if(*cartaTirada==ESPEJO&&IA->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
+//        printf("ESPEJO: Se le restaran %d puntos a %s!\nSe le sumaran %d puntos a %s\n",-1*IA->ultimaCartaNegativaRecibida,humano->nya,IA->puntosPreviosAEfectoNegativo-IA->puntaje,IA->nya);
+    printf("\n\t  ====================TURNO-%s======================\n",IA->nya);
+    Sleep(2000);
     return cartaTirada;
 }
 
-//version sin mensajes en pantalla para ver razonamiento
-tCarta* IAMedio(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano)
+tCarta* IAMedio(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano,tCarta*manoJugador,tJugada jugada)
 {
     tJugada ultJugada;
+    tCarta ultCartaJugada={'0'};
     //elije la carta
     tCarta *cartaTirada;
     unsigned char oponenteCeroPuntos,iaCercaDeGanar,iaPoseeSumarPuntos,iaPoseeNoSacarPuntos,iaPoseeSacarPuntos;
@@ -640,31 +481,21 @@ tCarta* IAMedio(const tPila *historialJugadas, const tPlayer *humano, const tPla
         if(iaCercaDeGanar==VERDADERO)
         {
             if(iaPoseeSumarPuntos==VERDADERO) //tira la carta que mas puntos le sume
-            {
                 cartaTirada=cartaQueSumaMasPuntos(mano);
-            }
             else
             {
                 if(iaPoseeNoSacarPuntos==VERDADERO) //tira la primera que no sea de sacar puntos para no desperdiciarla
-                {
                     cartaTirada=cartaQueNoEsDeTipo(mano,TIPO_NEGATIVO);
-                }
                 else //tira cualquiera
-                {
                     cartaTirada=cartaRandom(mano);
-                }
             }
         }
         else
         {
             if(iaPoseeNoSacarPuntos==VERDADERO) //tira la primera que no sea de sacar puntos para no desperdiciarla
-            {
                 cartaTirada=cartaQueNoEsDeTipo(mano,TIPO_NEGATIVO);
-            }
             else //tira cualquiera
-            {
                 cartaTirada=cartaRandom(mano);
-            }
         }
     }
     else
@@ -672,203 +503,204 @@ tCarta* IAMedio(const tPila *historialJugadas, const tPlayer *humano, const tPla
         if(iaCercaDeGanar==VERDADERO)
         {
             if(iaPoseeSumarPuntos==VERDADERO)//tira la carta que mas puntos sume
-            {
                 cartaTirada=cartaQueSumaMasPuntos(mano);
-            }
             else
             {
                 if(iaPoseeSacarPuntos==VERDADERO) //tira la carta negativa que mas puntos reste sin desperdiciar puntos
-                {
                     cartaTirada=cartaNegativaMasAdecuada(mano,humano->puntaje);
-                }
                 else //tira cualquiera
-                {
                     cartaTirada=cartaRandom(mano);
-                }
             }
         }
         else
         {
             if(iaPoseeSacarPuntos==VERDADERO)
-            {
                 cartaTirada=cartaNegativaMasAdecuada(mano,humano->puntaje);
-            }
             else
-            {
                 cartaTirada=cartaRandom(mano);
-            }
         }
     }
     if(cartaTirada==NULL)
-    {
         cartaTirada=mano;
-    }
-    printf("====================TURNO-%s======================\n",IA->nya);
     if(!verTope(historialJugadas,&ultJugada,sizeof(tJugada)))
-    {
-        printf("Nro de movimiento actual: 1\n");
-        puts("Aun no se hicieron jugadas!");
-    }
+        mostrarTablero(manoJugador,mano,&ultCartaJugada,jugada);
     else
-    {
-        printf("Ultima Jugada: %s tiro %s\n",ultJugada.jugadorActual.nya,obtenerNombreCarta(ultJugada.cartaJugada));
-        if(IA->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
-        {
-            printf("Ultima carta negativa recibida: %s\n",obtenerNombreCarta(IA->ultimaCartaNegativaRecibida));
-            printf("Puntos perdidos en esta tanda de turnos por efecto negativo: %d\n",IA->puntosPreviosAEfectoNegativo-IA->puntaje);
-        }
-        printf("Nro de movimiento actual: %d\n",ultJugada.nroTurno+1);
-    }
-    printf("Puntos del jugador Humano: %d\n",humano->puntaje);
-    printf("Puntos de la IA: %d\n",IA->puntaje);
-    printf("%s decidio tirar: %s\n",IA->nya,obtenerNombreCarta(*cartaTirada));
-    if(*cartaTirada==ESPEJO&&IA->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
-        printf("ESPEJO: Se le restaran %d puntos a %s!\nSe le sumaran %d puntos a %s\n",-1*IA->ultimaCartaNegativaRecibida,humano->nya,IA->puntosPreviosAEfectoNegativo-IA->puntaje,IA->nya);
-    puts("==========================================");
+        mostrarTablero(manoJugador,mano,&ultJugada.cartaJugada,jugada);
+    printf("\n\t  ====================TURNO-%s======================\n",IA->nya);
+    Sleep(2000);
     return cartaTirada;
 }
 
-/* VERSION CON RAZONAMIENTO (mensajes en pantalla) - PARA DEBUGGING
-tCarta* IAMedio(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano)
+tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano,tCarta*manoJugador,tJugada jugada)
 {
     tJugada ultJugada;
-    //elije la carta
-    tCarta *cartaTirada;
-    unsigned char oponenteCeroPuntos,iaCercaDeGanar,iaPoseeSumarPuntos,iaPoseeNoSacarPuntos,iaPoseeSacarPuntos;
-    //obtenemos la informacion necesaria para tomar la decision
-    oponenteCeroPuntos=humano->puntaje==0?VERDADERO:FALSO;
-    iaCercaDeGanar=IA->puntaje>=MAX_PUNTOS-IA_PUNTOS_CERCA_GANAR?1:0;
-    iaPoseeSumarPuntos=existeTipoDeCartaEnMano(mano,TIPO_POSITIVO);
-    iaPoseeSacarPuntos=existeTipoDeCartaEnMano(mano,TIPO_NEGATIVO);
-    iaPoseeNoSacarPuntos=existeNoTipoDeCartaEnMano(mano,TIPO_NEGATIVO);
-    puts("================================================");
-    puts("Mano de la IA: ");
+    tCarta *cartaTirada = NULL;
+    tCarta ultCartaJugada={'0'};
     mostrarMano(mano);
-    puts("================================================");
-    puts("=========RAZONAMIENTO DE LA IA MEDIO============");
-    if(oponenteCeroPuntos==VERDADERO)
-    {
-        puts("Ia ha detectado que el oponente tiene cero puntos");
-        if(iaCercaDeGanar==VERDADERO)
-        {
-            puts("Ia ha detectado que esta cerca de ganar");
-            if(iaPoseeSumarPuntos==VERDADERO) //tira la carta que mas puntos le sume
-            {
-                puts("Ia ha detectado que tiene cartas de sumar puntos");
-                puts("Ia intento tirar su carta mas positiva");
-                cartaTirada=cartaQueSumaMasPuntos(mano);
-            }
-            else
-            {
-                puts("Ia ha detectado que no posee cartas de sumar puntos");
-                if(iaPoseeNoSacarPuntos==VERDADERO) //tira la primera que no sea de sacar puntos para no desperdiciarla
-                {
-                    puts("Ia ha detectado que posee cartas que no sean de sacar puntos");
-                    puts("Ia intento tirar una carta que no es negativa");
-                    cartaTirada=cartaQueNoEsDeTipo(mano,TIPO_NEGATIVO);
-                }
-                else //tira cualquiera
-                {
-                    puts("Ia ha detectado que no posee cartas que no sean de sacar puntos");
-                    puts("Ia tiro cualquier carta de la mano");
-                    cartaTirada=cartaRandom(mano);
-                }
-            }
-        }
-        else
-        {
-            puts("Ia ha detectado que no esta cerca de ganar");
-            if(iaPoseeNoSacarPuntos==VERDADERO) //tira la primera que no sea de sacar puntos para no desperdiciarla
-            {
-                puts("Ia ha detectado que posee cartas que no son negativas");
-                puts("Ia tiro una carta no negativa para no desperdiciar");
-                cartaTirada=cartaQueNoEsDeTipo(mano,TIPO_NEGATIVO);
-            }
-            else //tira cualquiera
-            {
-                puts("Ia ha detectado que no posee cartas no negativas");
-                puts("Ia tiro cualquier carta de la mano");
-                cartaTirada=cartaRandom(mano);
-            }
-        }
+    unsigned char oponenteCeroPuntos = (humano->puntaje == 0) ? VERDADERO : FALSO;
+    unsigned char iaCercaDeGanar = (IA->puntaje >= MAX_PUNTOS - IA_PUNTOS_CERCA_GANAR) ? VERDADERO : FALSO;
+    unsigned char oponenteCercaDeGanar = (humano->puntaje >= MAX_PUNTOS - IA_PUNTOS_CERCA_GANAR) ? VERDADERO : FALSO;
+    unsigned char iaRecibioEfectoNegativo = (IA->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO) ? VERDADERO : FALSO;
+    unsigned char tieneEspejo = existeTipoDeCartaEnMano(mano, ESPEJO);
+    unsigned char tieneRepetirTurno = existeTipoDeCartaEnMano(mano, REPETIR_TURNO);
+    unsigned char tieneSumarPuntos = existeTipoDeCartaEnMano(mano, TIPO_POSITIVO);
+    unsigned char tieneSacarPuntos = existeTipoDeCartaEnMano(mano, TIPO_NEGATIVO);
+
+    // PRIORIDAD 1: Usar ESPEJO si recibió efecto negativo
+    if (iaRecibioEfectoNegativo && tieneEspejo) {
+        cartaTirada = obtenerCartaEspejo(mano);
     }
-    else
-    {
-        puts("Ia ha detectado que el oponente posee puntos");
-        if(iaCercaDeGanar==VERDADERO)
-        {
-            puts("Ia ha detectado que esta cerca de ganar");
-            if(iaPoseeSumarPuntos==VERDADERO)//tira la carta que mas puntos sume
-            {
-                puts("Ia ha detectado que posee cartas de sumar puntos");
-                puts("Ia intento tirar su carta mas positiva");
-                cartaTirada=cartaQueSumaMasPuntos(mano);
-            }
+
+    // PRIORIDAD 2: Si el oponente está cerca de ganar, ser agresivo
+    else if (oponenteCercaDeGanar) {
+        // SIEMPRE usar repetir turno si lo tiene - control total del juego
+        if (tieneRepetirTurno)
+            cartaTirada = obtenerCartaRepetirTurno(mano);
+        // Luego sacar puntos al oponente
+        else if (tieneSacarPuntos && !oponenteCeroPuntos)
+            cartaTirada = cartaNegativaMasAdecuada(mano, humano->puntaje);
+        // Si no puede ser agresivo, intentar ganar rápido
+        else if (tieneSumarPuntos)
+            cartaTirada = cartaQueSumaMasPuntos(mano);
+
+    }
+
+    // PRIORIDAD 3: Si la IA está cerca de ganar, priorizar victoria
+    else if (iaCercaDeGanar) {
+        // Intentar ganar inmediatamente
+        if (tieneSumarPuntos) {
+            tCarta *mejorCarta = cartaQuePuedeGanar(mano, IA->puntaje);
+            if (mejorCarta != NULL)
+                cartaTirada = mejorCarta;
             else
-            {
-                puts("Ia ha detectado que no posee cartas de sumar puntos");
-                if(iaPoseeSacarPuntos==VERDADERO) //tira la carta negativa que mas puntos reste sin desperdiciar puntos
-                {
-                    puts("Ia ha detectado que posee cartas de sacar puntos");
-                    puts("Ia intento tirar la carta negativa mas adecuada de su mano");
-                    cartaTirada=cartaNegativaMasAdecuada(mano,humano->puntaje);
-                }
-                else //tira cualquiera
-                {
-                    puts("Ia ha detectado que no posee cartas de sacar puntos");
-                    puts("Ia ha decidido tirar cualquier carta");
-                    cartaTirada=cartaRandom(mano);
-                }
-            }
+                cartaTirada = cartaQueSumaMasPuntos(mano);
         }
+        // Si no puede ganar directamente, usar REPETIR_TURNO para más oportunidades
+        else if (tieneRepetirTurno)
+            cartaTirada = obtenerCartaRepetirTurno(mano);
+        // Evitar desperdiciar cartas negativas
+        else if (!oponenteCeroPuntos && tieneSacarPuntos)
+            cartaTirada = cartaNegativaMasAdecuada(mano, humano->puntaje);
+    }
+
+    // PRIORIDAD 4: Juego estratégico normal
+    else {
+        // NUEVA LÓGICA: Si el oponente tiene puntos y la IA tiene REPETIR_TURNO, usarlo para mantener control
+        if (tieneRepetirTurno && humano->puntaje > 0 && (tieneSumarPuntos || tieneSacarPuntos))
+            cartaTirada = obtenerCartaRepetirTurno(mano);
+        // Si oponente tiene 0 puntos, no desperdiciar cartas negativas
+        else if (oponenteCeroPuntos) {
+            if (tieneSumarPuntos)
+                cartaTirada = cartaOptimaSumarPuntos(mano, IA->puntaje);
+            else if (tieneRepetirTurno)
+                cartaTirada = obtenerCartaRepetirTurno(mano);
+            else
+                // Evitar cartas negativas
+                cartaTirada = cartaQueNoEsDeTipo(mano, TIPO_NEGATIVO);
+        }
+        // Juego normal - PRIORIZAR REPETIR TURNO si tiene cartas útiles
         else
         {
-            puts("Ia ha detectado que no esta cerca de ganar");
-            if(iaPoseeSacarPuntos==VERDADERO)
-            {
-                puts("Ia ha detectado que posee cartas de sacar puntos");
-                puts("Ia ha tirado su carta negativa mas adecuada");
-                cartaTirada=cartaNegativaMasAdecuada(mano,humano->puntaje);
-            }
-            else
-            {
-                puts("Ia ha detectado que no posee cartas de sacar puntos");
-                puts("Ia ha decidido tirar cualquier carta");
-                cartaTirada=cartaRandom(mano);
-            }
+            // Si tiene REPETIR_TURNO y al menos una carta útil adicional, usarlo
+            if (tieneRepetirTurno && (tieneSacarPuntos || tieneSumarPuntos))
+                cartaTirada = obtenerCartaRepetirTurno(mano);
+            // Luego priorizar sacar puntos al oponente
+            else if (tieneSacarPuntos)
+                cartaTirada = cartaNegativaMasAdecuada(mano, humano->puntaje);
+            // Luego sumar puntos propios
+            else if (tieneSumarPuntos)
+                cartaTirada = cartaOptimaSumarPuntos(mano, IA->puntaje);
+            // Último recurso: REPETIR_TURNO aunque no tenga cartas muy útiles
+            else if (tieneRepetirTurno)
+                cartaTirada = obtenerCartaRepetirTurno(mano);
         }
     }
     if(cartaTirada==NULL)
-    {
-        puts("Esto no debio haber pasado, hubo algun error.");
         cartaTirada=mano;
-    }
-    printf("Ia decidio tirar: %s\n",obtenerNombreCarta(*cartaTirada));
-    puts("================================================");
-    printf("====================TURNO-%s======================\n",IA->nya);
     if(!verTope(historialJugadas,&ultJugada,sizeof(tJugada)))
-    {
-        printf("Nro de movimiento actual: 1\n");
-        puts("Aun no se hicieron jugadas!");
-    }
+        mostrarTablero(manoJugador,mano,&ultCartaJugada,jugada);
     else
-    {
-        printf("Ultima Jugada: %s tiro %s\n",ultJugada.jugadorActual.nya,obtenerNombreCarta(ultJugada.cartaJugada));
-        if(IA->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
-        {
-            printf("Ultima carta negativa recibida: %s\n",obtenerNombreCarta(IA->ultimaCartaNegativaRecibida));
-            printf("Puntos perdidos en esta tanda de turnos por efecto negativo: %d\n",IA->puntosPreviosAEfectoNegativo-IA->puntaje);
-        }
-        printf("Nro de movimiento actual: %d\n",ultJugada.nroTurno+1);
-    }
-    printf("Puntos del jugador Humano: %d\n",humano->puntaje);
-    printf("Puntos de la IA: %d\n",IA->puntaje);
-    printf("%s decidio tirar: %s\n",IA->nya,obtenerNombreCarta(*cartaTirada));
-    if(*cartaTirada==ESPEJO&&IA->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
-        printf("ESPEJO: Se le restaran %d puntos a %s!\nSe le sumaran %d puntos a %s\n",-1*IA->ultimaCartaNegativaRecibida,humano->nya,IA->puntosPreviosAEfectoNegativo-IA->puntaje,IA->nya);
-    puts("==========================================");
+        mostrarTablero(manoJugador,mano,&ultJugada.cartaJugada,jugada);
+    printf("\n\t  ====================TURNO-%s======================\n",IA->nya);
+    Sleep(2000);
     return cartaTirada;
-}*/
+
+    return cartaTirada;
+}
+
+tCarta* cartaQuePuedeGanar(tCarta *mano, char puntajeActual)
+{
+    unsigned x;
+    int puntosNecesarios = MAX_PUNTOS - puntajeActual;
+
+    for (x = 0; x < TAM_MANO; x++) {
+        if (*mano == MAS_DOS && puntosNecesarios <= 2) {
+            return mano;
+        }
+        else if (*mano == MAS_UNO && puntosNecesarios <= 1) {
+            return mano;
+        }
+        mano++;
+    }
+
+    return NULL;
+}
+
+tCarta* cartaOptimaSumarPuntos(tCarta *mano, char puntajeActual)
+{
+    unsigned x;
+    int puntosNecesarios = MAX_PUNTOS - puntajeActual;
+
+    // Si está muy cerca de ganar, priorizar no desperdiciar
+    if (puntosNecesarios <= 2) {
+        // Buscar primero MAS_UNO si solo necesita 1 punto
+        if (puntosNecesarios == 1) {
+            for (x = 0; x < TAM_MANO; x++) {
+                if (*mano == MAS_UNO) {
+                    return mano;
+                }
+                mano++;
+            }
+            // Si no tiene MAS_UNO, usar MAS_DOS
+            mano -= TAM_MANO; // Resetear puntero
+        }
+
+        // Buscar MAS_DOS
+        for (x = 0; x < TAM_MANO; x++) {
+            if (*mano == MAS_DOS) {
+                return mano;
+            }
+            mano++;
+        }
+    }
+
+    // Situación normal: priorizar la carta que más puntos sume
+    return cartaQueSumaMasPuntos(mano);
+}
+
+tCarta* obtenerCartaEspejo(tCarta *mano)
+{
+    unsigned x;
+    for (x = 0; x < TAM_MANO; x++) {
+        if (*mano == ESPEJO) {
+            return mano;
+        }
+        mano++;
+    }
+    return NULL;
+}
+
+tCarta* obtenerCartaRepetirTurno(tCarta *mano)
+{
+    unsigned x;
+    for (x = 0; x < TAM_MANO; x++) {
+        if (*mano == REPETIR_TURNO) {
+            return mano;
+        }
+        mano++;
+    }
+    return NULL;
+}
 
 tCarta *cartaNegativaMasAdecuada(tCarta *mano, char puntaje)
 {
@@ -953,41 +785,22 @@ unsigned char existeTipoDeCartaEnMano (const tCarta *mano, char tipoCarta)
     return FALSO;
 }
 
-////unsigned char cartaEsDeTipo(tCarta carta, char tipoCarta)
-////{
-////    //clasifica los tipos, devuelve verdadero si la carta pasada es del tipo indicado
-////    if(tipoCarta==TIPO_NEGATIVO)
-////    {
-////        if(carta==MENOS_UNO||carta==MENOS_DOS)
-////            return VERDADERO;
-////    }
-////    else if(tipoCarta==TIPO_POSITIVO)
-////    {
-////        if(carta==MAS_DOS||carta==MAS_UNO)
-////            return VERDADERO;
-////    }
-////    return FALSO;
-////}
 unsigned char cartaEsDeTipo(tCarta carta, char tipoCarta)
 {
-    if(tipoCarta == TIPO_NEGATIVO) {
-        if(carta == MENOS_UNO || carta == MENOS_DOS)
+    //clasifica los tipos, devuelve verdadero si la carta pasada es del tipo indicado
+    if(tipoCarta==TIPO_NEGATIVO)
+    {
+        if(carta==MENOS_UNO||carta==MENOS_DOS)
             return VERDADERO;
     }
-    else if(tipoCarta == TIPO_POSITIVO) {
-        if(carta == MAS_DOS || carta == MAS_UNO)
-            return VERDADERO;
-    }
-    else if(tipoCarta == TIPO_ESPEJO) {  // <- AGREGAR
-        if(carta == ESPEJO)
-            return VERDADERO;
-    }
-    else if(tipoCarta == TIPO_REPETIR_TURNO) {  // <- AGREGAR
-        if(carta == REPETIR_TURNO)
+    else if(tipoCarta==TIPO_POSITIVO)
+    {
+        if(carta==MAS_DOS||carta==MAS_UNO)
             return VERDADERO;
     }
     return FALSO;
 }
+
 int numeroAleatorioEnRango(int minimo, int maximo)
 {
     return rand() % (maximo - minimo + 1) + minimo;
@@ -1004,22 +817,22 @@ const char *obtenerNombreCarta (tCarta carta)
     switch(carta)
     {
     case MAS_UNO:
-        return "MAS UNO";
+        return "+1";
         break;
     case MENOS_UNO:
-        return "MENOS UNO";
+        return "-1";
         break;
     case MAS_DOS:
-        return "MAS DOS";
+        return "+2";
         break;
     case MENOS_DOS:
-        return "MENOS DOS";
+        return "-2";
         break;
     case REPETIR_TURNO:
-        return "REPETIR TURNO";
+        return "RepTurno";
         break;
     case ESPEJO:
-        return "ESPEJO";
+        return "Espejo";
         break;
     case CARTA_USADA:
         return "CARTA USADA";
@@ -1030,295 +843,5 @@ const char *obtenerNombreCarta (tCarta carta)
     default:
         return "NO IDENTIFICADO";
         break;
-    }
-}
-
-//FUNCIÓN NIVEL DIFICIL
-// Función para verificar si existe carta ESPEJO en mano
-unsigned char existeTipoDeCartaEnMano_Espejo(const tCarta *mano) {
-    unsigned x;
-    for (x = 0; x < TAM_MANO; x++) {
-        if (*mano == ESPEJO) {
-            return VERDADERO;
-        }
-        mano++;
-    }
-    return FALSO;
-}
-
-// Función para verificar si existe carta REPETIR_TURNO en mano
-unsigned char existeTipoDeCartaEnMano_RepetirTurno(const tCarta *mano) {
-    unsigned x;
-    for (x = 0; x < TAM_MANO; x++) {
-        if (*mano == REPETIR_TURNO) {
-            return VERDADERO;
-        }
-        mano++;
-    }
-    return FALSO;
-}
-
-// Obtener carta ESPEJO de la mano
-tCarta* obtenerCartaEspejo(tCarta *mano) {
-    unsigned x;
-    for (x = 0; x < TAM_MANO; x++) {
-        if (*mano == ESPEJO) {
-            return mano;
-        }
-        mano++;
-    }
-    return NULL;
-}
-
-// Obtener carta REPETIR_TURNO de la mano
-tCarta* obtenerCartaRepetirTurno(tCarta *mano) {
-    unsigned x;
-    for (x = 0; x < TAM_MANO; x++) {
-        if (*mano == REPETIR_TURNO) {
-            return mano;
-        }
-        mano++;
-    }
-    return NULL;
-}
-
-// Contar cuántas cartas "buenas" tiene en mano para la situación actual
-unsigned char contarCartasBuenas(const tCarta *mano, char puntajeIA, char puntajeOponente) {
-    unsigned x;
-    unsigned char count = 0;
-
-    for (x = 0; x < TAM_MANO; x++) {
-        // Cartas siempre buenas
-        if (*mano == MAS_UNO || *mano == MAS_DOS || *mano == REPETIR_TURNO) {
-            count++;
-        }
-        // ESPEJO es buena si hay efecto negativo pendiente
-        else if (*mano == ESPEJO) {
-            // Asumimos que si llama a esta función, ya verificó si hay efecto negativo
-            count++;
-        }
-        // Cartas negativas son buenas si el oponente tiene puntos
-        else if ((*mano == MENOS_UNO || *mano == MENOS_DOS) && puntajeOponente > 0) {
-            count++;
-        }
-        mano++;
-    }
-
-    return count;
-}
-
-// Encontrar carta que puede hacer ganar inmediatamente
-tCarta* cartaQuePuedeGanar(tCarta *mano, char puntajeActual) {
-    unsigned x;
-    int puntosNecesarios = MAX_PUNTOS - puntajeActual;
-
-    for (x = 0; x < TAM_MANO; x++) {
-        if (*mano == MAS_DOS && puntosNecesarios <= 2) {
-            return mano;
-        }
-        else if (*mano == MAS_UNO && puntosNecesarios <= 1) {
-            return mano;
-        }
-        mano++;
-    }
-
-    return NULL;
-}
-
-// Seleccionar la carta óptima para sumar puntos según la situación
-tCarta* cartaOptimaSumarPuntos(tCarta *mano, char puntajeActual) {
-    unsigned x;
-    tCarta *mejorCarta = NULL;
-    int puntosNecesarios = MAX_PUNTOS - puntajeActual;
-
-    // Si está muy cerca de ganar, priorizar no desperdiciar
-    if (puntosNecesarios <= 2) {
-        // Buscar primero MAS_UNO si solo necesita 1 punto
-        if (puntosNecesarios == 1) {
-            for (x = 0; x < TAM_MANO; x++) {
-                if (*mano == MAS_UNO) {
-                    return mano;
-                }
-                mano++;
-            }
-            // Si no tiene MAS_UNO, usar MAS_DOS
-            mano -= TAM_MANO; // Resetear puntero
-        }
-
-        // Buscar MAS_DOS
-        for (x = 0; x < TAM_MANO; x++) {
-            if (*mano == MAS_DOS) {
-                return mano;
-            }
-            mano++;
-        }
-    }
-
-    // Situación normal: priorizar la carta que más puntos sume
-    return cartaQueSumaMasPuntos(mano);
-}
-
-// Actualizar la función setearIA para incluir IA Difícil
-tIA setearIA_Actualizado(unsigned char dificultad, char *nombreIa) {
-    switch(dificultad) {
-        case IA_FACIL: {
-            strcpy(nombreIa, NOMBRE_IA_FACIL);
-            return IAFacil;
-        }
-        case IA_MEDIO: {
-            strcpy(nombreIa, NOMBRE_IA_MEDIO);
-            return IAMedio;
-        }
-        case IA_DIFICIL: {
-            strcpy(nombreIa, NOMBRE_IA_DIFICIL);  // Necesitas definir esta constante
-            return IADificil;
-        }
-        default:
-            strcpy(nombreIa, NOMBRE_IA_FACIL);
-            return IAFacil;
-    }
-}
-
-///MEJORA
-tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano)
-{
-    tJugada ultJugada;
-    tCarta *cartaTirada = NULL;
-    puts("MANO IA:\n");
-    mostrarMano(mano);
-    // Variables de análisis del estado del juego
-    unsigned char oponenteCeroPuntos = (humano->puntaje == 0) ? VERDADERO : FALSO;
-    unsigned char iaCercaDeGanar = (IA->puntaje >= MAX_PUNTOS - IA_PUNTOS_CERCA_GANAR) ? VERDADERO : FALSO;
-    unsigned char oponenteCercaDeGanar = (humano->puntaje >= MAX_PUNTOS - IA_PUNTOS_CERCA_GANAR) ? VERDADERO : FALSO;
-    unsigned char iaRecibioEfectoNegativo = (IA->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO) ? VERDADERO : FALSO;
-
-    // Análisis de cartas disponibles en mano
-    unsigned char tieneEspejo = existeTipoDeCartaEnMano(mano, TIPO_ESPEJO);
-    unsigned char tieneRepetirTurno = existeTipoDeCartaEnMano(mano, TIPO_REPETIR_TURNO);
-    unsigned char tieneSumarPuntos = existeTipoDeCartaEnMano(mano, TIPO_POSITIVO);
-    unsigned char tieneSacarPuntos = existeTipoDeCartaEnMano(mano, TIPO_NEGATIVO);
-
-    // PRIORIDAD 1: Usar ESPEJO si recibió efecto negativo
-    if (iaRecibioEfectoNegativo && tieneEspejo) {
-        cartaTirada = obtenerCartaEspejo(mano);
-    }
-
-    // PRIORIDAD 2: Si el oponente está cerca de ganar, ser agresivo
-    else if (oponenteCercaDeGanar) {
-        // SIEMPRE usar repetir turno si lo tiene - control total del juego
-        if (tieneRepetirTurno) {
-            cartaTirada = obtenerCartaRepetirTurno(mano);
-        }
-        // Luego sacar puntos al oponente
-        else if (tieneSacarPuntos && !oponenteCeroPuntos) {
-            cartaTirada = cartaNegativaMasAdecuada(mano, humano->puntaje);
-        }
-        // Si no puede ser agresivo, intentar ganar rápido
-        else if (tieneSumarPuntos) {
-            cartaTirada = cartaQueSumaMasPuntos(mano);
-        }
-    }
-
-    // PRIORIDAD 3: Si la IA está cerca de ganar, priorizar victoria
-    else if (iaCercaDeGanar) {
-        // Intentar ganar inmediatamente
-        if (tieneSumarPuntos) {
-            tCarta *mejorCarta = cartaQuePuedeGanar(mano, IA->puntaje);
-            if (mejorCarta != NULL) {
-                cartaTirada = mejorCarta;
-            } else {
-                cartaTirada = cartaQueSumaMasPuntos(mano);
-            }
-        }
-        // Si no puede ganar directamente, usar REPETIR_TURNO para más oportunidades
-        else if (tieneRepetirTurno) {
-            cartaTirada = obtenerCartaRepetirTurno(mano);
-        }
-        // Evitar desperdiciar cartas negativas
-        else if (!oponenteCeroPuntos && tieneSacarPuntos) {
-            cartaTirada = cartaNegativaMasAdecuada(mano, humano->puntaje);
-        }
-    }
-
-    // PRIORIDAD 4: Juego estratégico normal
-    else {
-        // NUEVA LÓGICA: Si el oponente tiene puntos y la IA tiene REPETIR_TURNO, usarlo para mantener control
-        if (tieneRepetirTurno && humano->puntaje > 0 && (tieneSumarPuntos || tieneSacarPuntos)) {
-            cartaTirada = obtenerCartaRepetirTurno(mano);
-        }
-        // Si oponente tiene 0 puntos, no desperdiciar cartas negativas
-        else if (oponenteCeroPuntos) {
-            if (tieneSumarPuntos) {
-                cartaTirada = cartaOptimaSumarPuntos(mano, IA->puntaje);
-            }
-            else if (tieneRepetirTurno) {
-                cartaTirada = obtenerCartaRepetirTurno(mano);
-            }
-            else {
-                // Evitar cartas negativas
-                cartaTirada = cartaQueNoEsDeTipo(mano, TIPO_NEGATIVO);
-            }
-        }
-        // Juego normal - PRIORIZAR REPETIR TURNO si tiene cartas útiles
-        else {
-            // Si tiene REPETIR_TURNO y al menos una carta útil adicional, usarlo
-            if (tieneRepetirTurno && (tieneSacarPuntos || tieneSumarPuntos)) {
-                cartaTirada = obtenerCartaRepetirTurno(mano);
-            }
-            // Luego priorizar sacar puntos al oponente
-            else if (tieneSacarPuntos) {
-                cartaTirada = cartaNegativaMasAdecuada(mano, humano->puntaje);
-            }
-            // Luego sumar puntos propios
-            else if (tieneSumarPuntos) {
-                cartaTirada = cartaOptimaSumarPuntos(mano, IA->puntaje);
-            }
-            // Último recurso: REPETIR_TURNO aunque no tenga cartas muy útiles
-            else if (tieneRepetirTurno) {
-                cartaTirada = obtenerCartaRepetirTurno(mano);
-            }
-        }
-    }
-
-    // Fallback: si no se seleccionó ninguna carta por algún error lógico
-    if (cartaTirada == NULL) {
-        cartaTirada = mano; // Primera carta disponible
-    }
-
-    // Mostrar información del turno (similar a las otras IAs)
-    printf("====================TURNO-%s======================\n", IA->nya);
-    if (!verTope(historialJugadas, &ultJugada, sizeof(tJugada)))
-    {
-        printf("Nro de movimiento actual: 1\n");
-        puts("Aun no se hicieron jugadas!");
-    }
-    else {
-        printf("Ultima Jugada: %s tiro %s\n", ultJugada.jugadorActual.nya, obtenerNombreCarta(ultJugada.cartaJugada));
-        if (IA->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO) {
-            printf("Ultima carta negativa recibida: %s\n", obtenerNombreCarta(IA->ultimaCartaNegativaRecibida));
-            printf("Puntos perdidos en esta tanda de turnos por efecto negativo: %d\n", IA->puntosPreviosAEfectoNegativo - IA->puntaje);
-        }
-        printf("Nro de movimiento actual: %d\n", ultJugada.nroTurno + 1);
-    }
-    printf("Puntos del jugador Humano: %d\n", humano->puntaje);
-    printf("Puntos de la IA: %d\n", IA->puntaje);
-    printf("%s decidio tirar: %s\n", IA->nya, obtenerNombreCarta(*cartaTirada));
-    if (*cartaTirada == ESPEJO && IA->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO) {
-        printf("ESPEJO: Se le restaran %d puntos a %s!\nSe le sumaran %d puntos a %s\n",
-               -1 * IA->ultimaCartaNegativaRecibida, humano->nya,
-               IA->puntosPreviosAEfectoNegativo - IA->puntaje, IA->nya);
-    }
-    puts("==========================================");
-
-    return cartaTirada;
-}
-// OPCIONAL: Función para mostrar si el jugador puede usar ESPEJO
-void mostrarOpcionEspejo(const tPlayer *jugador)
-{
-    if(jugador->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO)
-    {
-        printf("*** %s puede usar ESPEJO para reflejar %s ***\n",
-               jugador->nya,
-               obtenerNombreCarta(jugador->ultimaCartaNegativaRecibida));
     }
 }

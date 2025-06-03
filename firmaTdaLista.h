@@ -54,7 +54,7 @@ void ordenarListaSeleccion(tLista *lista, const int cmp(const void *dato1, const
 tNodo **buscarMenorNodo(tNodo **reco, const int cmp(const void *dato1,const void *dato2));
 
 //mapeo
-void mappearLista (tLista *lista, const void mappeo(const void *dato));
+void mappearLista (tLista *lista, const void mappeo(const void *dato, const void* dato1));
 void imprimirAlumno (const void *dato);
 
 #endif // FIRMATDALISTA_H_INCLUDED

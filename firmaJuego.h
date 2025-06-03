@@ -9,7 +9,10 @@
 #define TAM_CAD_PL 50
 #define TAM_NOMBRE_INFORME 90
 #define TAM_BUFFER_FECHA 25
-#define MAX_PUNTOS 12
+
+///PUNTOS A ALCANZAR POR PARTIDA
+#define MAX_PUNTOS 5
+
 #define HEADER_INFORME "informe-juego_"
 #define PATH_CARTAS "cartas.dat"
 #define ERROR_ARCH_CARTAS -1
@@ -43,14 +46,7 @@
 #define VERDADERO 1
 #define FALSO 0
 
-////
-// Agregar estas constantes si no las tienes:
-#define IA_DIFICIL 2
-#define NOMBRE_IA_DIFICIL "IA DIFICIL"
-#define TIPO_ESPEJO 3
-#define TIPO_REPETIR_TURNO 4
-
-
+#include "firmaConexion.h"
 typedef char tCarta;
 
 typedef struct
@@ -70,25 +66,20 @@ typedef struct
     unsigned nroTurno;
 }tJugada;
 
-//
-// Y el prototipo de la función:
-tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano);
-
-
-typedef tCarta* (*tIA)(const tPila*, const tPlayer *, const tPlayer*, tCarta *mano);
+typedef tCarta* (*tIA)(const tPila*, const tPlayer *, const tPlayer*, tCarta *mano,tCarta* manoJugador, tJugada jugada);
 
 int crearArchivo(const char*path);
 
 int bajarArchLista(const char* path, tLista *pl);
 
-int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimientoGanador);
+int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimientoGanador,tConfigApi* configuracion);
 void mostrarCarta (const void *dato);
 void insertarCartaEnMano(tCarta *mano, const tCarta *cartaAInsertar, unsigned pos);
 tIA setearIA(unsigned char dificultad, char *nombreIa);
-tCarta* IAFacil(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano);
-tCarta* IAMedio(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano);
-tCarta *juegaHumano (const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano);
-void mostrarOpcionEspejo(const tPlayer *jugador);
+tCarta* IAFacil(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano, tCarta*manoJugador, tJugada jugada);
+tCarta* IAMedio(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano, tCarta*manoJugador, tJugada jugada);
+tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano,tCarta*manoJugador,tJugada jugada);
+tCarta *juegaHumano (const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano, tCarta*manoIA, tJugada jugada);
 int numeroAleatorioEnRango(int minimo, int maximo);
 void repartirCartasInicial (tLista *barajaPrincipal,tLista *barajaUsadas, tCarta *manoCpu, tCarta *manoHumano);
 const char *obtenerNombreCarta (tCarta carta);
@@ -107,5 +98,8 @@ tCarta *cartaQueSumaMasPuntos(tCarta *mano);
 tCarta *cartaRandom(tCarta *mano);
 tCarta *cartaNegativaMasAdecuada(tCarta *mano, char puntaje);
 
-
+tCarta* cartaQuePuedeGanar(tCarta *mano, char puntajeActual) ;
+tCarta* obtenerCartaEspejo(tCarta *mano);
+tCarta* obtenerCartaRepetirTurno(tCarta *mano);
+tCarta* cartaOptimaSumarPuntos(tCarta *mano, char puntajeActual);
 #endif // FIRMAJUEGO_H_INCLUDED

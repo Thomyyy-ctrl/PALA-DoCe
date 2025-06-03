@@ -1,16 +1,63 @@
 # depslib dependency file v1.0
-1748025196 source:c:\users\pc\documents\estudio\materias\algoritmos y estructura de datos\parciales\proyectocartas\main.c
+1748927475 source:c:\users\pc\desktop\pala-doce-logica-juego\conexion.c
+	"firmaConexion.h"
+	"firmaUtilitarias.h"
+	"firmaJuego.h"
+
+1748974123 source:c:\users\pc\desktop\pala-doce-logica-juego\juego.c
+	"firmaJuego.h"
+	"firmaUtilitarias.h"
+	"firmaConexion.h"
+
+1748974290 c:\users\pc\desktop\pala-doce-logica-juego\firmajuego.h
 	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+	"firmaTdaLista.h"
+	"firmaTdaPila.h"
+	"firmaConexion.h"
+
+1748932168 c:\users\pc\desktop\pala-doce-logica-juego\firmatdalista.h
+	<stdio.h>
+	<stdlib.h>
 	<string.h>
 
-1748024405 source:c:\users\pc\documents\estudio\materias\algoritmos y estructura de datos\parciales\proyectocartas\conexion.c
+1748717478 c:\users\pc\desktop\pala-doce-logica-juego\firmatdapila.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
 
-1748024357 source:c:\users\pc\documents\estudio\materias\algoritmos y estructura de datos\parciales\proyectocartas\tdalista.c
-
-1748024420 source:c:\users\pc\documents\estudio\materias\algoritmos y estructura de datos\parciales\proyectocartas\tdapila.c
-
-1748025196 source:c:\users\pc\documents\estudio\materias\algoritmos y estructura de datos\parciales\proyectocartas\utilitarias.c
+1748814668 source:c:\users\pc\desktop\pala-doce-logica-juego\main.c
+	<stdio.h>
+	<stdlib.h>
 	"firmaUtilitarias.h"
+	"firmaConexion.h"
 
-1748025196 c:\users\pc\documents\estudio\materias\algoritmos y estructura de datos\parciales\proyectocartas\firmautilitarias.h
+1748932168 source:c:\users\pc\desktop\pala-doce-logica-juego\tdalista.c
+	"firmaTdaLista.h"
+
+1748717478 source:c:\users\pc\desktop\pala-doce-logica-juego\tdapila.c
+	"firmaTdaPila.h"
+
+1748973864 source:c:\users\pc\desktop\pala-doce-logica-juego\utilitarias.c
+	"firmaUtilitarias.h"
+	"firmaConexion.h"
+	"firmaJuego.h"
+	"firmaTdaLista.h"
+	<stdio.h>
+	<windows.h>
+	<time.h>
+	<string.h>
+	<stdlib.h>
+
+1748973864 c:\users\pc\desktop\pala-doce-logica-juego\firmautilitarias.h
+	"firmaJuego.h"
+	"firmaConexion.h"
+
+1748922432 c:\users\pc\desktop\pala-doce-logica-juego\firmaconexion.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<curl/curl.h>
 
