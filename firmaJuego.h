@@ -11,7 +11,7 @@
 #define TAM_BUFFER_FECHA 25
 
 ///PUNTOS A ALCANZAR POR PARTIDA
-#define MAX_PUNTOS 5
+#define MAX_PUNTOS 12
 
 #define HEADER_INFORME "informe-juego_"
 #define PATH_CARTAS "cartas.dat"
@@ -34,7 +34,7 @@
 #define NOMBRE_IA_MEDIO "IA MEDIO"
 #define IA_DIFICIL 2
 #define NOMBRE_IA_DIFICIL "IA DIFICIL"
-#define IA_PUNTOS_CERCA_GANAR 2 //indica a cuantos puntos de la meta se considera cerca de ganar
+#define IA_PUNTOS_CERCA_GANAR 4 //indica a cuantos puntos de la meta se considera cerca de ganar
 #define TAM_NOMBRE_CARTA 20
 #define SIN_MEMORIA_JUEGO -3
 #define BARAJA_VACIA 0
@@ -90,6 +90,7 @@ char reponerBarajaPrincipal (tLista *barajaPrincipal, tLista *barajaUsadas);
 int mezclarBaraja(tLista *baraja);
 int generarInforme (tPila *historialJugadas);
 void mostrarGanador(tJugada *movimientoGanador);
+void aplicarEfecto (tCarta cartaJugada, tPlayer *jugadorActual, tPlayer *jugadorContrario, unsigned char *repetirTurno);
 unsigned char existeTipoDeCartaEnMano (const tCarta *mano, char tipoCarta);
 unsigned char cartaEsDeTipo(tCarta carta, char tipoCarta);
 unsigned char existeNoTipoDeCartaEnMano (const tCarta *mano, char tipoCarta);
@@ -102,4 +103,6 @@ tCarta* cartaQuePuedeGanar(tCarta *mano, char puntajeActual) ;
 tCarta* obtenerCartaEspejo(tCarta *mano);
 tCarta* obtenerCartaRepetirTurno(tCarta *mano);
 tCarta* cartaOptimaSumarPuntos(tCarta *mano, char puntajeActual);
+
+void mostrarErrorDoce(char codError);
 #endif // FIRMAJUEGO_H_INCLUDED

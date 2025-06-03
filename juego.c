@@ -19,13 +19,10 @@ int crearArchivo(const char*path)
     };
     FILE*arch = fopen(path, "wb");
     if(!arch)
-    {
-        perror("Ha ocurrido un error\n");
-        return 0;
-    }
+        return ERROR_ARCH_CARTAS;
     fwrite(card, sizeof(tCarta), sizeof(card)/ sizeof(tCarta),arch);
     fclose(arch);
-    return 1;
+    return TODO_OK_JUEGO;
 }
 
 int bajarArchLista(const char* path, tLista *pl)
@@ -33,19 +30,24 @@ int bajarArchLista(const char* path, tLista *pl)
     tCarta card;
     FILE*arch = fopen(path, "rb");
     if(!arch)
-    {
-        perror("Ha ocurrido un error\n");
-        return 0;
-    }
+        return ERROR_ARCH_CARTAS;
     fread(&card, sizeof(tCarta),1, arch);
-    insertarAlFinal(pl,&card,sizeof(tCarta));
+    if(!insertarAlFinal(pl,&card,sizeof(tCarta)))
+    {
+        fclose(arch);
+        return SIN_MEMORIA_JUEGO;
+    }
     while(!feof(arch))
     {
         fread(&card, sizeof(tCarta),1, arch);
-        insertarAlFinal(pl,&card,sizeof(tCarta));
+        if(!insertarAlFinal(pl,&card,sizeof(tCarta)))
+        {
+            fclose(arch);
+            return SIN_MEMORIA_JUEGO;
+        }
     }
     fclose(arch);
-    return 1;
+    return TODO_OK_JUEGO;
 }
 
 int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimientoGanador,tConfigApi* configuracion)
@@ -65,11 +67,12 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
     crearLista(&barajaUsadas);
     //creamos la lista del historial de jugadas
     crearPila(&historialJugadas);
-
-    //esto de crearElArchivo en realidad seria del main creeria...
-    //crearArchivo(PATH_CARTAS);
-    if(!bajarArchLista(PATH_CARTAS,&barajaPrincipal))
+    //cargamos las cartas
+    if(crearArchivo(PATH_CARTAS)!=TODO_OK_JUEGO)
         return ERROR_ARCH_CARTAS;
+    if(bajarArchLista(PATH_CARTAS,&barajaPrincipal)!=TODO_OK_JUEGO)
+        return ERROR_ARCH_CARTAS;
+    //hacemos la mezcla inicial
     mezclarBaraja(&barajaPrincipal);
 
     //seteamos la IA en base a la dificultad seleccionada
@@ -102,57 +105,7 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
             cartaJugada=juegaIA(&historialJugadas,jugadorHumano,&jugadorCpu,manoCpu,manoHumano,jugada);
 
         //se aplica el efecto
-        switch(*cartaJugada)
-        {
-        case MAS_DOS:
-        {
-            jugadorActual->puntaje+=2;
-        }
-        break;
-        case MENOS_DOS:
-        {
-            jugadorContrario->puntosPreviosAEfectoNegativo=jugadorContrario->puntaje;
-            jugadorContrario->ultimaCartaNegativaRecibida=MENOS_DOS;
-            (jugadorContrario->puntaje)-=2;
-            if(jugadorContrario->puntaje<0)
-                jugadorContrario->puntaje=0;
-        }
-        break;
-        case MAS_UNO:
-        {
-            jugadorActual->puntaje++;
-        }
-        break;
-        case MENOS_UNO:
-        {
-            jugadorContrario->puntosPreviosAEfectoNegativo=jugadorContrario->puntaje;
-            jugadorContrario->ultimaCartaNegativaRecibida=MENOS_UNO;
-            jugadorContrario->puntaje--;
-            if(jugadorContrario->puntaje<0)
-                jugadorContrario->puntaje=0;
-        }
-        break;
-        case REPETIR_TURNO:
-        {
-            repetirTurno=1;
-        }
-        break;
-        case ESPEJO:
-        {
-            if(jugadorActual->ultimaCartaNegativaRecibida!=SIN_EFECTO_NEGATIVO)
-            {
-                if(jugadorActual->puntaje!=jugadorActual->puntosPreviosAEfectoNegativo)
-                    jugadorActual->puntaje=jugadorActual->puntosPreviosAEfectoNegativo;
-                jugadorContrario->puntaje+=jugadorActual->ultimaCartaNegativaRecibida;
-                if(jugadorContrario->puntaje<0)
-                    jugadorContrario->puntaje=0;
-            }
-        }
-        break;
-        default:
-            puts("Carta sin efecto, funcion no implementada");
-            break;
-        }
+        aplicarEfecto(*cartaJugada,jugadorActual,jugadorContrario,&repetirTurno);
         //se registra la jugada en el historial ( tanto el estado del jugador actual como el de su rival )
         jugada.cartaJugada=*cartaJugada;
         jugada.jugadorActual=*jugadorActual;
@@ -244,13 +197,94 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
     verTope(&historialJugadas,movimientoGanador,sizeof(tJugada));
     mostrarGanador(movimientoGanador);
     if(generarInforme(&historialJugadas)!=TODO_OK_JUEGO)
-        puts("Error al generar el informe de la partida");
+        return ERROR_ARCH_INFORME;
     liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
 
     //Subo el resultado de la partida del jugador contra la IA
     enviarDatosJSON(movimientoGanador,configuracion);
 
     return TODO_OK_JUEGO;
+}
+
+void aplicarEfecto (tCarta cartaJugada, tPlayer *jugadorActual, tPlayer *jugadorContrario, unsigned char *repetirTurno)
+{
+    switch(cartaJugada)
+    {
+    case MAS_DOS:
+    {
+        jugadorActual->puntaje+=2;
+    }
+    break;
+    case MENOS_DOS:
+    {
+        jugadorContrario->puntosPreviosAEfectoNegativo=jugadorContrario->puntaje;
+        jugadorContrario->ultimaCartaNegativaRecibida=MENOS_DOS;
+        (jugadorContrario->puntaje)-=2;
+        if(jugadorContrario->puntaje<0)
+            jugadorContrario->puntaje=0;
+    }
+    break;
+    case MAS_UNO:
+    {
+        jugadorActual->puntaje++;
+    }
+    break;
+    case MENOS_UNO:
+    {
+        jugadorContrario->puntosPreviosAEfectoNegativo=jugadorContrario->puntaje;
+        jugadorContrario->ultimaCartaNegativaRecibida=MENOS_UNO;
+        jugadorContrario->puntaje--;
+        if(jugadorContrario->puntaje<0)
+            jugadorContrario->puntaje=0;
+    }
+    break;
+    case REPETIR_TURNO:
+    {
+        *repetirTurno=1;
+    }
+    break;
+    case ESPEJO:
+    {
+        //modificacion hecha por laion (recuperado de github)
+        if(jugadorActual->ultimaCartaNegativaRecibida != SIN_EFECTO_NEGATIVO)
+        {
+            tCarta efectoAReflejar = jugadorActual->ultimaCartaNegativaRecibida;
+            // Restaurar puntos del jugador que usa ESPEJO
+            if(jugadorActual->puntaje < jugadorActual->puntosPreviosAEfectoNegativo)
+                jugadorActual->puntaje = jugadorActual->puntosPreviosAEfectoNegativo;
+
+            // Preparar al oponente para recibir el efecto reflejado
+            jugadorContrario->puntosPreviosAEfectoNegativo = jugadorContrario->puntaje;
+            jugadorContrario->ultimaCartaNegativaRecibida = efectoAReflejar;
+
+            // Aplicar el efecto reflejado al oponente
+            switch(efectoAReflejar)
+            {
+            case MENOS_UNO:
+            {
+                jugadorContrario->puntaje--;
+                if(jugadorContrario->puntaje < 0)
+                    jugadorContrario->puntaje = 0;
+                break;
+            }
+            case MENOS_DOS:
+            {
+                jugadorContrario->puntaje -= 2;
+                if(jugadorContrario->puntaje < 0)
+                    jugadorContrario->puntaje = 0;
+                break;
+            }
+            }
+            // Limpiar el efecto del jugador que usó ESPEJO
+            //jugadorActual->ultimaCartaNegativaRecibida = SIN_EFECTO_NEGATIVO;
+            ///esta linea de arriba se hace mas adelante, no aca.
+        }
+    }
+    break;
+    default:
+        puts("Carta sin efecto, funcion no implementada");
+        break;
+    }
 }
 
 void mostrarGanador(tJugada *movimientoGanador)
@@ -391,7 +425,7 @@ void repartirCartasInicial (tLista *barajaPrincipal,tLista *barajaUsadas, tCarta
 tCarta *juegaHumano (const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano,tCarta* manoIA, tJugada jugada)
 {
     tJugada ultimaJugada;
-    tCarta cartaJugada={'0'};
+    tCarta cartaJugada= {'0'};
     int opcion;
     if(!pilaVacia(historialJugadas))
     {
@@ -435,17 +469,23 @@ tIA setearIA(unsigned char dificultad, char *nombreIa)
         return IAMedio;
     }
     break;
+    case IA_DIFICIL:
+    {
+        strcpy(nombreIa,NOMBRE_IA_DIFICIL);
+        return IADificil;
+    }
+    break;
     default:
         strcpy(nombreIa,NOMBRE_IA_FACIL);
         return IAFacil;
     }
 }
 
-tCarta* IAFacil(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano,tCarta*manoJugador ,tJugada jugada)
+tCarta* IAFacil(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano,tCarta*manoJugador,tJugada jugada)
 {
     //devuelve una carta cualquiera de las que tiene en mano
     tJugada ultJugada;
-    tCarta ultCartaJugada={'0'};
+    tCarta ultCartaJugada= {'0'};
     tCarta *cartaTirada=cartaRandom(mano);
     if(!verTope(historialJugadas,&ultJugada,sizeof(tJugada)))
     {
@@ -466,7 +506,7 @@ tCarta* IAFacil(const tPila *historialJugadas, const tPlayer *humano, const tPla
 tCarta* IAMedio(const tPila *historialJugadas, const tPlayer *humano, const tPlayer*IA, tCarta *mano,tCarta*manoJugador,tJugada jugada)
 {
     tJugada ultJugada;
-    tCarta ultCartaJugada={'0'};
+    tCarta ultCartaJugada= {'0'};
     //elije la carta
     tCarta *cartaTirada;
     unsigned char oponenteCeroPuntos,iaCercaDeGanar,iaPoseeSumarPuntos,iaPoseeNoSacarPuntos,iaPoseeSacarPuntos;
@@ -535,7 +575,7 @@ tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tP
 {
     tJugada ultJugada;
     tCarta *cartaTirada = NULL;
-    tCarta ultCartaJugada={'0'};
+    tCarta ultCartaJugada= {'0'};
     mostrarMano(mano);
     unsigned char oponenteCeroPuntos = (humano->puntaje == 0) ? VERDADERO : FALSO;
     unsigned char iaCercaDeGanar = (IA->puntaje >= MAX_PUNTOS - IA_PUNTOS_CERCA_GANAR) ? VERDADERO : FALSO;
@@ -547,12 +587,14 @@ tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tP
     unsigned char tieneSacarPuntos = existeTipoDeCartaEnMano(mano, TIPO_NEGATIVO);
 
     // PRIORIDAD 1: Usar ESPEJO si recibió efecto negativo
-    if (iaRecibioEfectoNegativo && tieneEspejo) {
+    if (iaRecibioEfectoNegativo && tieneEspejo)
+    {
         cartaTirada = obtenerCartaEspejo(mano);
     }
 
     // PRIORIDAD 2: Si el oponente está cerca de ganar, ser agresivo
-    else if (oponenteCercaDeGanar) {
+    else if (oponenteCercaDeGanar)
+    {
         // SIEMPRE usar repetir turno si lo tiene - control total del juego
         if (tieneRepetirTurno)
             cartaTirada = obtenerCartaRepetirTurno(mano);
@@ -566,9 +608,11 @@ tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tP
     }
 
     // PRIORIDAD 3: Si la IA está cerca de ganar, priorizar victoria
-    else if (iaCercaDeGanar) {
+    else if (iaCercaDeGanar)
+    {
         // Intentar ganar inmediatamente
-        if (tieneSumarPuntos) {
+        if (tieneSumarPuntos)
+        {
             tCarta *mejorCarta = cartaQuePuedeGanar(mano, IA->puntaje);
             if (mejorCarta != NULL)
                 cartaTirada = mejorCarta;
@@ -584,12 +628,14 @@ tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tP
     }
 
     // PRIORIDAD 4: Juego estratégico normal
-    else {
+    else
+    {
         // NUEVA LÓGICA: Si el oponente tiene puntos y la IA tiene REPETIR_TURNO, usarlo para mantener control
         if (tieneRepetirTurno && humano->puntaje > 0 && (tieneSumarPuntos || tieneSacarPuntos))
             cartaTirada = obtenerCartaRepetirTurno(mano);
         // Si oponente tiene 0 puntos, no desperdiciar cartas negativas
-        else if (oponenteCeroPuntos) {
+        else if (oponenteCeroPuntos)
+        {
             if (tieneSumarPuntos)
                 cartaTirada = cartaOptimaSumarPuntos(mano, IA->puntaje);
             else if (tieneRepetirTurno)
@@ -616,7 +662,7 @@ tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tP
         }
     }
     if(cartaTirada==NULL)
-        cartaTirada=mano;
+        cartaTirada=cartaRandom(mano);
     if(!verTope(historialJugadas,&ultJugada,sizeof(tJugada)))
         mostrarTablero(manoJugador,mano,&ultCartaJugada,jugada);
     else
@@ -633,11 +679,14 @@ tCarta* cartaQuePuedeGanar(tCarta *mano, char puntajeActual)
     unsigned x;
     int puntosNecesarios = MAX_PUNTOS - puntajeActual;
 
-    for (x = 0; x < TAM_MANO; x++) {
-        if (*mano == MAS_DOS && puntosNecesarios <= 2) {
+    for (x = 0; x < TAM_MANO; x++)
+    {
+        if (*mano == MAS_DOS && puntosNecesarios <= 2)
+        {
             return mano;
         }
-        else if (*mano == MAS_UNO && puntosNecesarios <= 1) {
+        else if (*mano == MAS_UNO && puntosNecesarios <= 1)
+        {
             return mano;
         }
         mano++;
@@ -652,11 +701,15 @@ tCarta* cartaOptimaSumarPuntos(tCarta *mano, char puntajeActual)
     int puntosNecesarios = MAX_PUNTOS - puntajeActual;
 
     // Si está muy cerca de ganar, priorizar no desperdiciar
-    if (puntosNecesarios <= 2) {
+    if (puntosNecesarios <= 2)
+    {
         // Buscar primero MAS_UNO si solo necesita 1 punto
-        if (puntosNecesarios == 1) {
-            for (x = 0; x < TAM_MANO; x++) {
-                if (*mano == MAS_UNO) {
+        if (puntosNecesarios == 1)
+        {
+            for (x = 0; x < TAM_MANO; x++)
+            {
+                if (*mano == MAS_UNO)
+                {
                     return mano;
                 }
                 mano++;
@@ -666,8 +719,10 @@ tCarta* cartaOptimaSumarPuntos(tCarta *mano, char puntajeActual)
         }
 
         // Buscar MAS_DOS
-        for (x = 0; x < TAM_MANO; x++) {
-            if (*mano == MAS_DOS) {
+        for (x = 0; x < TAM_MANO; x++)
+        {
+            if (*mano == MAS_DOS)
+            {
                 return mano;
             }
             mano++;
@@ -681,8 +736,10 @@ tCarta* cartaOptimaSumarPuntos(tCarta *mano, char puntajeActual)
 tCarta* obtenerCartaEspejo(tCarta *mano)
 {
     unsigned x;
-    for (x = 0; x < TAM_MANO; x++) {
-        if (*mano == ESPEJO) {
+    for (x = 0; x < TAM_MANO; x++)
+    {
+        if (*mano == ESPEJO)
+        {
             return mano;
         }
         mano++;
@@ -693,8 +750,10 @@ tCarta* obtenerCartaEspejo(tCarta *mano)
 tCarta* obtenerCartaRepetirTurno(tCarta *mano)
 {
     unsigned x;
-    for (x = 0; x < TAM_MANO; x++) {
-        if (*mano == REPETIR_TURNO) {
+    for (x = 0; x < TAM_MANO; x++)
+    {
+        if (*mano == REPETIR_TURNO)
+        {
             return mano;
         }
         mano++;
@@ -798,6 +857,9 @@ unsigned char cartaEsDeTipo(tCarta carta, char tipoCarta)
         if(carta==MAS_DOS||carta==MAS_UNO)
             return VERDADERO;
     }
+    else if(tipoCarta==carta) //casos donde tipo es REPETIR_TURNO o ESPEJO, es decir, donde no queres verlo por grupo
+        return VERDADERO;
+
     return FALSO;
 }
 
@@ -844,4 +906,24 @@ const char *obtenerNombreCarta (tCarta carta)
         return "NO IDENTIFICADO";
         break;
     }
+}
+
+void mostrarErrorDoce(char codError)
+{
+    switch(codError)
+    {
+    case SIN_MEMORIA_JUEGO:
+        puts("Se cerro el juego por falta de memoria en el sistema.");
+        break;
+    case ERROR_ARCH_CARTAS:
+        puts("Hubo un problema al intentar crear/leer el archivo de cartas.");
+        break;
+    case ERROR_ARCH_INFORME:
+        puts("Hubo un problema al intentar crear el archivo de informe de la partida.");
+        break;
+    default:
+        puts("Hubo un error desconocido durante el juego.");
+        break;
+    };
+    system("pause");
 }

@@ -14,6 +14,7 @@ int menu(tConfigApi* configuracion)
     tLista listaRanking;
     unsigned opcionDificultad;
     int flag;
+    char estadoDoce;
 
     tPlayer jugador;
     tJugada movimientoGanador;
@@ -34,7 +35,9 @@ int menu(tConfigApi* configuracion)
                 /// INGRESO DEL NOMBRE DEL JUGADOR:
                 ingresarJugadorNombreYApellido(&jugador);
                 system("cls");
-                jugarDoce(&jugador,opcionDificultad,&movimientoGanador,configuracion);
+                estadoDoce=jugarDoce(&jugador,opcionDificultad,&movimientoGanador,configuracion);
+                if(estadoDoce!=TODO_OK_JUEGO)
+                    mostrarErrorDoce(estadoDoce);
                 flag = 1;
                 break;
             }
@@ -110,7 +113,7 @@ void mostrarManoIA(tCarta* c)
     // Línea del contenido
     for (int i = 0; i < CARTAS; i++) {
         if (c[i]!='0' && c[i] != CARTA_USADA)
-           // printf("| %-8s | ",obtenerNombreCarta(c[i]));
+           //printf("| %-8s | ",obtenerNombreCarta(c[i]));
             printf("| %-8s | "," ");
         else
             printf("             ");
