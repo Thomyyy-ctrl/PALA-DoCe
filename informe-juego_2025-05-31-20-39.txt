@@ -1,0 +1,19 @@
+[TURNO 1] Jony McJony jugo MAS DOS -> Jony McJony: 2 | IA MEDIO: 0 | Efecto Activo: SIN EFECTO NEGATIVO
+[TURNO 2] IA MEDIO jugo MAS UNO -> IA MEDIO: 1 | Jony McJony: 2 | Efecto Activo: SIN EFECTO NEGATIVO
+[TURNO 3] Jony McJony jugo MENOS UNO -> Jony McJony: 2 | IA MEDIO: 0 | Efecto Activo: SIN EFECTO NEGATIVO
+[TURNO 4] IA MEDIO jugo MENOS DOS -> IA MEDIO: 0 | Jony McJony: 0 | Efecto Activo: MENOS UNO
+[TURNO 5] Jony McJony jugo MAS DOS -> Jony McJony: 2 | IA MEDIO: 0 | Efecto Activo: MENOS DOS
+[TURNO 6] IA MEDIO jugo MENOS DOS -> IA MEDIO: 0 | Jony McJony: 0 | Efecto Activo: SIN EFECTO NEGATIVO
+[TURNO 7] Jony McJony jugo MAS DOS -> Jony McJony: 2 | IA MEDIO: 0 | Efecto Activo: MENOS DOS
+[TURNO 8] IA MEDIO jugo MENOS DOS -> IA MEDIO: 0 | Jony McJony: 0 | Efecto Activo: SIN EFECTO NEGATIVO
+[TURNO 9] Jony McJony jugo ESPEJO -> Jony McJony: 2 | IA MEDIO: 0 | Efecto Activo: MENOS DOS
+[TURNO 10] IA MEDIO jugo MENOS UNO -> IA MEDIO: 0 | Jony McJony: 1 | Efecto Activo: SIN EFECTO NEGATIVO
+[TURNO 11] Jony McJony jugo MAS DOS -> Jony McJony: 3 | IA MEDIO: 0 | Efecto Activo: MENOS UNO
+[TURNO 12] IA MEDIO jugo MAS UNO -> IA MEDIO: 1 | Jony McJony: 3 | Efecto Activo: SIN EFECTO NEGATIVO
+[TURNO 13] Jony McJony jugo ESPEJO -> Jony McJony: 3 | IA MEDIO: 1 | Efecto Activo: SIN EFECTO NEGATIVO
+[TURNO 14] IA MEDIO jugo REPETIR TURNO -> IA MEDIO: 1 | Jony McJony: 3 | Efecto Activo: SIN EFECTO NEGATIVO
+[TURNO 15] IA MEDIO jugo MAS UNO -> IA MEDIO: 2 | Jony McJony: 3 | Efecto Activo: SIN EFECTO NEGATIVO
+[TURNO 16] Jony McJony jugo MAS UNO -> Jony McJony: 4 | IA MEDIO: 2 | Efecto Activo: SIN EFECTO NEGATIVO
+-----------------------------
+Ganador: Jony McJony | Puntos: 4
+Perdedor: IA MEDIO | Puntos: 2
