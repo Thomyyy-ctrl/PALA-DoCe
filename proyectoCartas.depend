@@ -138,7 +138,7 @@
 	"firmaJuego.h"
 	"firmaConexion.h"
 
-1748988112 c:\unlam\algoritmosproyectos\final\pala-doce\firmajuego.h
+1749014116 c:\unlam\algoritmosproyectos\final\pala-doce\firmajuego.h
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -157,7 +157,7 @@
 	<stdlib.h>
 	<string.h>
 
-1748995200 source:c:\unlam\algoritmosproyectos\final\pala-doce\juego.c
+1749015397 source:c:\unlam\algoritmosproyectos\final\pala-doce\juego.c
 	"firmaJuego.h"
 	"firmaUtilitarias.h"
 	"firmaConexion.h"
@@ -174,7 +174,7 @@
 1748988112 source:c:\unlam\algoritmosproyectos\final\pala-doce\tdapila.c
 	"firmaTdaPila.h"
 
-1748997797 source:c:\unlam\algoritmosproyectos\final\pala-doce\utilitarias.c
+1749017175 source:c:\unlam\algoritmosproyectos\final\pala-doce\utilitarias.c
 	"firmaUtilitarias.h"
 	"firmaConexion.h"
 	"firmaJuego.h"

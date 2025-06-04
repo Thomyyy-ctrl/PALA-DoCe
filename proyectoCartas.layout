@@ -2,22 +2,21 @@
 <CodeBlocks_layout_file>
 	<FileVersion major="1" minor="0" />
 	<ActiveTarget name="Debug" />
-	<File name="firmaTdaLista.h" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="main.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1173" topLine="7" />
+			<Cursor1 position="356" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="conexion.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="firmaJuego.h" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="428" topLine="0" />
+			<Cursor1 position="4087" topLine="77" />
 		</Cursor>
 	</File>
-	<File name="utilitarias.c" open="1" top="1" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="utilitarias.c" open="1" top="1" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="4013" topLine="87" />
+			<Cursor1 position="3935" topLine="102" />
 		</Cursor>
 		<Folding>
-			<Collapse line="132" />
 			<Collapse line="163" />
 			<Collapse line="180" />
 			<Collapse line="218" />
@@ -27,19 +26,34 @@
 			<Collapse line="327" />
 		</Folding>
 	</File>
-	<File name="firmaConexion.h" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="juego.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="2" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="794" topLine="1" />
+			<Cursor1 position="5943" topLine="558" />
 		</Cursor>
 	</File>
-	<File name="firmaTdaPila.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="firmaTdaPila.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="0" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="firmaUtilitarias.h" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="TdaLista.c" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="629" topLine="0" />
+			<Cursor1 position="3359" topLine="0" />
+		</Cursor>
+		<Folding>
+			<Collapse line="2" />
+			<Collapse line="7" />
+			<Collapse line="13" />
+			<Collapse line="19" />
+			<Collapse line="33" />
+			<Collapse line="53" />
+			<Collapse line="106" />
+			<Collapse line="119" />
+		</Folding>
+	</File>
+	<File name="firmaTdaLista.h" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1173" topLine="7" />
 		</Cursor>
 	</File>
 	<File name="TdaPila.c" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -56,34 +70,19 @@
 			<Collapse line="64" />
 		</Folding>
 	</File>
-	<File name="firmaJuego.h" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="firmaConexion.h" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="659" topLine="0" />
+			<Cursor1 position="794" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="main.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="firmaUtilitarias.h" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="356" topLine="0" />
+			<Cursor1 position="629" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="juego.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="2" zoom_2="0">
+	<File name="conexion.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="6273" topLine="156" />
+			<Cursor1 position="428" topLine="0" />
 		</Cursor>
-	</File>
-	<File name="TdaLista.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="3359" topLine="0" />
-		</Cursor>
-		<Folding>
-			<Collapse line="2" />
-			<Collapse line="7" />
-			<Collapse line="13" />
-			<Collapse line="19" />
-			<Collapse line="33" />
-			<Collapse line="53" />
-			<Collapse line="106" />
-			<Collapse line="119" />
-		</Folding>
 	</File>
 </CodeBlocks_layout_file>

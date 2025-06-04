@@ -25,7 +25,6 @@
 #define ESPEJO 3
 #define REPETIR_TURNO 4
 #define CARTA_USADA 5
-#define CARTA_NULA -5
 #define JUGADOR_IA 0
 #define JUGADOR_HUMANO 1
 #define IA_FACIL 0
@@ -52,7 +51,7 @@ typedef char tCarta;
 typedef struct
 {
     char puntaje;
-    char puntosPreviosAEfectoNegativo; //refleja el puntaje pre
+    char puntosPreviosAEfectoNegativo; //refleja el puntaje previo
     char ultimaCartaNegativaRecibida; //refleja la carta negativa en si
     unsigned idPlayer; //setear en JUGADOR_IA o JUGADOR_HUMANO acordemente
     char nya[TAM_CAD_PL];
@@ -102,7 +101,6 @@ tCarta *cartaNegativaMasAdecuada(tCarta *mano, char puntaje);
 tCarta* cartaQuePuedeGanar(tCarta *mano, char puntajeActual) ;
 tCarta* obtenerCartaEspejo(tCarta *mano);
 tCarta* obtenerCartaRepetirTurno(tCarta *mano);
-tCarta* cartaOptimaSumarPuntos(tCarta *mano, char puntajeActual);
 
 void mostrarErrorDoce(char codError);
 #endif // FIRMAJUEGO_H_INCLUDED

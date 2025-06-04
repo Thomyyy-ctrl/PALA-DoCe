@@ -32,19 +32,14 @@ int bajarArchLista(const char* path, tLista *pl)
     if(!arch)
         return ERROR_ARCH_CARTAS;
     fread(&card, sizeof(tCarta),1, arch);
-    if(!insertarAlFinal(pl,&card,sizeof(tCarta)))
-    {
-        fclose(arch);
-        return SIN_MEMORIA_JUEGO;
-    }
     while(!feof(arch))
     {
-        fread(&card, sizeof(tCarta),1, arch);
         if(!insertarAlFinal(pl,&card,sizeof(tCarta)))
         {
             fclose(arch);
             return SIN_MEMORIA_JUEGO;
         }
+        fread(&card, sizeof(tCarta),1, arch);
     }
     fclose(arch);
     return TODO_OK_JUEGO;
@@ -655,7 +650,7 @@ tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tP
         else if (oponenteCeroPuntos)
         {
             if (tieneSumarPuntos)
-                cartaTirada = cartaOptimaSumarPuntos(mano, IA->puntaje);
+                cartaTirada = cartaQueSumaMasPuntos(mano);
             else if (tieneRepetirTurno)
                 cartaTirada = obtenerCartaRepetirTurno(mano);
             else
@@ -673,7 +668,7 @@ tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tP
                 cartaTirada = cartaNegativaMasAdecuada(mano, humano->puntaje);
             // Luego sumar puntos propios
             else if (tieneSumarPuntos)
-                cartaTirada = cartaOptimaSumarPuntos(mano, IA->puntaje);
+                cartaTirada = cartaQueSumaMasPuntos(mano);
             // Último recurso: REPETIR_TURNO aunque no tenga cartas muy útiles
             else if (tieneRepetirTurno)
                 cartaTirada = obtenerCartaRepetirTurno(mano);
@@ -711,44 +706,6 @@ tCarta* cartaQuePuedeGanar(tCarta *mano, char puntajeActual)
     }
 
     return NULL;
-}
-
-tCarta* cartaOptimaSumarPuntos(tCarta *mano, char puntajeActual)
-{
-    unsigned x;
-    int puntosNecesarios = MAX_PUNTOS - puntajeActual;
-
-    // Si está muy cerca de ganar, priorizar no desperdiciar
-    if (puntosNecesarios <= 2)
-    {
-        // Buscar primero MAS_UNO si solo necesita 1 punto
-        if (puntosNecesarios == 1)
-        {
-            for (x = 0; x < TAM_MANO; x++)
-            {
-                if (*mano == MAS_UNO)
-                {
-                    return mano;
-                }
-                mano++;
-            }
-            // Si no tiene MAS_UNO, usar MAS_DOS
-            mano -= TAM_MANO; // Resetear puntero
-        }
-
-        // Buscar MAS_DOS
-        for (x = 0; x < TAM_MANO; x++)
-        {
-            if (*mano == MAS_DOS)
-            {
-                return mano;
-            }
-            mano++;
-        }
-    }
-
-    // Situación normal: priorizar la carta que más puntos sume
-    return cartaQueSumaMasPuntos(mano);
 }
 
 tCarta* obtenerCartaEspejo(tCarta *mano)
