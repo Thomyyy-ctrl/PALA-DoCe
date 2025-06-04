@@ -35,6 +35,7 @@ Las manos de los jugadores están representadas mediante un vector de tCarta con
 Además, el tamaño de la mano es fijo, por lo que no es necesario insertar ni eliminar elementos dinámicamente. En lugar de quitar una carta del vector al usarla, simplemente se la marca como utilizada asignándole el código CARTA_USADA. Esto evita operaciones costosas como desplazamientos de elementos, que serían necesarias en caso de modificar un vector de tamaño variable. Dado que el tamaño es pequeño y constante, esta solución es eficiente y simple.
 
 - **tPlayer**
+
 | Campo                          | Tipo       | Descripción                                                       |
 | ------------------------------ | ---------- | ----------------------------------------------------------------- |
 | `puntaje`                      | `char`     | Puntaje actual del jugador.                                       |
@@ -47,6 +48,7 @@ Muchos de los campos son autoexplicativos. En cuanto a puntosPreviosAEfectoNegat
 JUGADOR_IA 0 y JUGADOR_HUMANO 1.
 
 - **tJugada**
+
 | Campo           | Tipo       | Descripción                                   |
 | --------------- | ---------- | --------------------------------------------- |
 | `cartaJugada`   | `tCarta`   | Carta que fue jugada durante el turno.        |
