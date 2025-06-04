@@ -123,3 +123,65 @@
 	<string.h>
 	<stdlib.h>
 
+1748988112 source:c:\unlam\algoritmosproyectos\final\pala-doce\conexion.c
+	"firmaConexion.h"
+	"firmaUtilitarias.h"
+	"firmaJuego.h"
+
+1748988112 c:\unlam\algoritmosproyectos\final\pala-doce\firmaconexion.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<curl/curl.h>
+
+1748988112 c:\unlam\algoritmosproyectos\final\pala-doce\firmautilitarias.h
+	"firmaJuego.h"
+	"firmaConexion.h"
+
+1748988112 c:\unlam\algoritmosproyectos\final\pala-doce\firmajuego.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+	"firmaTdaLista.h"
+	"firmaTdaPila.h"
+	"firmaConexion.h"
+
+1748995528 c:\unlam\algoritmosproyectos\final\pala-doce\firmatdalista.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1748988112 c:\unlam\algoritmosproyectos\final\pala-doce\firmatdapila.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1748995200 source:c:\unlam\algoritmosproyectos\final\pala-doce\juego.c
+	"firmaJuego.h"
+	"firmaUtilitarias.h"
+	"firmaConexion.h"
+
+1748988112 source:c:\unlam\algoritmosproyectos\final\pala-doce\main.c
+	<stdio.h>
+	<stdlib.h>
+	"firmaUtilitarias.h"
+	"firmaConexion.h"
+
+1748995528 source:c:\unlam\algoritmosproyectos\final\pala-doce\tdalista.c
+	"firmaTdaLista.h"
+
+1748988112 source:c:\unlam\algoritmosproyectos\final\pala-doce\tdapila.c
+	"firmaTdaPila.h"
+
+1748997797 source:c:\unlam\algoritmosproyectos\final\pala-doce\utilitarias.c
+	"firmaUtilitarias.h"
+	"firmaConexion.h"
+	"firmaJuego.h"
+	"firmaTdaLista.h"
+	<stdio.h>
+	<windows.h>
+	<time.h>
+	<string.h>
+	<stdlib.h>
+

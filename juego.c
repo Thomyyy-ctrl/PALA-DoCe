@@ -340,32 +340,50 @@ int generarInforme (tPila *historialJugadas)
     return TODO_OK_JUEGO;
 }
 
+//Mezclar baraja hecho por Laion (recuperado de github).
+///MENSAJE EXPLICATIVO: Básicamente se me ocurrió en vez de dejarlo en un 50%
+///Las probabilidades de insercción, lo llevé a un 33% para tener mayor variacion
+///Sin generar tanto overhead, podríamos haberlo hecho con un limite decreciente en base
+///a que sabemos que tenemos 40 nodos(cartas) y podiamos ir insertando por posición
+///Pero me resultó más óptimo y con un menor overhead esta versión :)
 int mezclarBaraja(tLista *baraja)
 {
     tLista barajaAux;
     tCarta bufferCarta;
-    unsigned mezclas=3,x,y; //a mayor numero mejor mezclado queda pero mas procesamiento es requerido
+    unsigned x, decision;
     crearLista(&barajaAux);
-    for(x=0; x<mezclas; x++)
+    // Una sola pasada, más eficiente que las 3 originales
+    for(x = 0; x < TAM_BARAJA; x++)
     {
-        for(y=0; y<TAM_BARAJA; y++)
-        {
-            if(numeroAleatorioEnRango(0,1)==0)
-                sacarPrimero(baraja,&bufferCarta,sizeof(tCarta));
-            else
-                sacarUltimo(baraja,&bufferCarta,sizeof(tCarta));
-            if(!insertarAlInicio(&barajaAux,&bufferCarta,sizeof(tCarta)))
-            {
-                vaciarLista(&barajaAux);
-                return SIN_MEMORIA_JUEGO;
-            }
-        }
-        if(!reponerBarajaPrincipal(baraja,&barajaAux))
+        // Generamos un número entre 0 y 5 para más variabilidad
+        decision = numeroAleatorioEnRango(0, 5);
+        // Extraemos de diferentes formas según la decisión
+        if(decision <= 2)  // 50% probabilidad (0,1,2)
+            sacarPrimero(baraja, &bufferCarta, sizeof(tCarta));
+        else  // 50% probabilidad (3,4,5)
+            sacarUltimo(baraja, &bufferCarta, sizeof(tCarta));
+
+        // Insertamos también de forma variada
+        if(decision % 3 == 0)  // 33% probabilidad (0,3)
+            insertarAlInicio(&barajaAux, &bufferCarta, sizeof(tCarta));
+        else  // 66% probabilidad (1,2,4,5)
+            insertarAlFinal(&barajaAux, &bufferCarta, sizeof(tCarta));
+
+        // Verificación de memoria simplificada
+        if(!listaVacia(baraja) && listaVacia(&barajaAux))
         {
             vaciarLista(&barajaAux);
             return SIN_MEMORIA_JUEGO;
         }
     }
+
+    // Devolvemos las cartas a la baraja original
+    if(!reponerBarajaPrincipal(baraja, &barajaAux))
+    {
+        vaciarLista(&barajaAux);
+        return SIN_MEMORIA_JUEGO;
+    }
+
     return TODO_OK_JUEGO;
 }
 
