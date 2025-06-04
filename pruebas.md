@@ -20,7 +20,7 @@ Jugador sin efecto negativo juega ESPEJO
 Se espera que, si no contamos con un efecto negativo jugado recientemente, el espejo no tenga efecto.  
 
 **Salida obtenida:**  
-![Caso 1](img/caso1.png)
+![Caso 1](fotoPruebas/foto1)
 
 ---
 
