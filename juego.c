@@ -158,6 +158,9 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
                 liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
                 return SIN_MEMORIA_JUEGO;
             }
+            system("cls");
+            printf("\n\t  MEZCLANDO EL MAZO...");
+            Sleep(1500);
             if(mezclarBaraja(&barajaPrincipal)==SIN_MEMORIA_JUEGO)
             {
                 liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
@@ -270,7 +273,7 @@ void aplicarEfecto (tCarta cartaJugada, tPlayer *jugadorActual, tPlayer *jugador
                 break;
             }
             }
-            // Limpiar el efecto del jugador que usó ESPEJO
+            // Limpiar el efecto del jugador que usÃ³ ESPEJO
             //jugadorActual->ultimaCartaNegativaRecibida = SIN_EFECTO_NEGATIVO;
             ///esta linea de arriba se hace mas adelante, no aca.
         }
@@ -323,7 +326,7 @@ int generarInforme (tPila *historialJugadas)
         }
     }
     //escribimos el informe
-    //[Turno 1] IA FACIL jugó MAS UNO -> IA: 1 | Jony McJony: 0 | Efecto activo: Ninguno
+    //[Turno 1] IA FACIL jugÃ³ MAS UNO -> IA: 1 | Jony McJony: 0 | Efecto activo: Ninguno
 
     while(desapilar(&pilaInvertida,&jugadaBuffer,sizeof(tJugada)))
         fprintf(informe,"[TURNO %d] %s jugo %s -> %s: %d | %s: %d | Efecto Activo: %s\n",jugadaBuffer.nroTurno,
@@ -336,35 +339,35 @@ int generarInforme (tPila *historialJugadas)
 }
 
 //Mezclar baraja hecho por Laion (recuperado de github).
-///MENSAJE EXPLICATIVO: Básicamente se me ocurrió en vez de dejarlo en un 50%
-///Las probabilidades de insercción, lo llevé a un 33% para tener mayor variacion
-///Sin generar tanto overhead, podríamos haberlo hecho con un limite decreciente en base
-///a que sabemos que tenemos 40 nodos(cartas) y podiamos ir insertando por posición
-///Pero me resultó más óptimo y con un menor overhead esta versión :)
+///MENSAJE EXPLICATIVO: BÃ¡sicamente se me ocurriÃ³ en vez de dejarlo en un 50%
+///Las probabilidades de insercciÃ³n, lo llevÃ© a un 33% para tener mayor variacion
+///Sin generar tanto overhead, podrÃ­amos haberlo hecho con un limite decreciente en base
+///a que sabemos que tenemos 40 nodos(cartas) y podiamos ir insertando por posiciÃ³n
+///Pero me resultÃ³ mÃ¡s Ã³ptimo y con un menor overhead esta versiÃ³n :)
 int mezclarBaraja(tLista *baraja)
 {
     tLista barajaAux;
     tCarta bufferCarta;
     unsigned x, decision;
     crearLista(&barajaAux);
-    // Una sola pasada, más eficiente que las 3 originales
+    // Una sola pasada, mÃ¡s eficiente que las 3 originales
     for(x = 0; x < TAM_BARAJA; x++)
     {
-        // Generamos un número entre 0 y 5 para más variabilidad
+        // Generamos un nÃºmero entre 0 y 5 para mÃ¡s variabilidad
         decision = numeroAleatorioEnRango(0, 5);
-        // Extraemos de diferentes formas según la decisión
+        // Extraemos de diferentes formas segÃºn la decisiÃ³n
         if(decision <= 2)  // 50% probabilidad (0,1,2)
             sacarPrimero(baraja, &bufferCarta, sizeof(tCarta));
         else  // 50% probabilidad (3,4,5)
             sacarUltimo(baraja, &bufferCarta, sizeof(tCarta));
 
-        // Insertamos también de forma variada
+        // Insertamos tambiÃ©n de forma variada
         if(decision % 3 == 0)  // 33% probabilidad (0,3)
             insertarAlInicio(&barajaAux, &bufferCarta, sizeof(tCarta));
         else  // 66% probabilidad (1,2,4,5)
             insertarAlFinal(&barajaAux, &bufferCarta, sizeof(tCarta));
 
-        // Verificación de memoria simplificada
+        // VerificaciÃ³n de memoria simplificada
         if(!listaVacia(baraja) && listaVacia(&barajaAux))
         {
             vaciarLista(&barajaAux);
@@ -599,13 +602,13 @@ tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tP
     unsigned char tieneSumarPuntos = existeTipoDeCartaEnMano(mano, TIPO_POSITIVO);
     unsigned char tieneSacarPuntos = existeTipoDeCartaEnMano(mano, TIPO_NEGATIVO);
 
-    // PRIORIDAD 1: Usar ESPEJO si recibió efecto negativo
+    // PRIORIDAD 1: Usar ESPEJO si recibiÃ³ efecto negativo
     if (iaRecibioEfectoNegativo && tieneEspejo)
     {
         cartaTirada = obtenerCartaEspejo(mano);
     }
 
-    // PRIORIDAD 2: Si el oponente está cerca de ganar, ser agresivo
+    // PRIORIDAD 2: Si el oponente estÃ¡ cerca de ganar, ser agresivo
     else if (oponenteCercaDeGanar)
     {
         // SIEMPRE usar repetir turno si lo tiene - control total del juego
@@ -614,13 +617,13 @@ tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tP
         // Luego sacar puntos al oponente
         else if (tieneSacarPuntos && !oponenteCeroPuntos)
             cartaTirada = cartaNegativaMasAdecuada(mano, humano->puntaje);
-        // Si no puede ser agresivo, intentar ganar rápido
+        // Si no puede ser agresivo, intentar ganar rÃ¡pido
         else if (tieneSumarPuntos)
             cartaTirada = cartaQueSumaMasPuntos(mano);
 
     }
 
-    // PRIORIDAD 3: Si la IA está cerca de ganar, priorizar victoria
+    // PRIORIDAD 3: Si la IA estÃ¡ cerca de ganar, priorizar victoria
     else if (iaCercaDeGanar)
     {
         // Intentar ganar inmediatamente
@@ -632,7 +635,7 @@ tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tP
             else
                 cartaTirada = cartaQueSumaMasPuntos(mano);
         }
-        // Si no puede ganar directamente, usar REPETIR_TURNO para más oportunidades
+        // Si no puede ganar directamente, usar REPETIR_TURNO para mÃ¡s oportunidades
         else if (tieneRepetirTurno)
             cartaTirada = obtenerCartaRepetirTurno(mano);
         // Evitar desperdiciar cartas negativas
@@ -640,10 +643,10 @@ tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tP
             cartaTirada = cartaNegativaMasAdecuada(mano, humano->puntaje);
     }
 
-    // PRIORIDAD 4: Juego estratégico normal
+    // PRIORIDAD 4: Juego estratÃ©gico normal
     else
     {
-        // NUEVA LÓGICA: Si el oponente tiene puntos y la IA tiene REPETIR_TURNO, usarlo para mantener control
+        // NUEVA LÃ“GICA: Si el oponente tiene puntos y la IA tiene REPETIR_TURNO, usarlo para mantener control
         if (tieneRepetirTurno && humano->puntaje > 0 && (tieneSumarPuntos || tieneSacarPuntos))
             cartaTirada = obtenerCartaRepetirTurno(mano);
         // Si oponente tiene 0 puntos, no desperdiciar cartas negativas
@@ -657,10 +660,10 @@ tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tP
                 // Evitar cartas negativas
                 cartaTirada = cartaQueNoEsDeTipo(mano, TIPO_NEGATIVO);
         }
-        // Juego normal - PRIORIZAR REPETIR TURNO si tiene cartas útiles
+        // Juego normal - PRIORIZAR REPETIR TURNO si tiene cartas Ãºtiles
         else
         {
-            // Si tiene REPETIR_TURNO y al menos una carta útil adicional, usarlo
+            // Si tiene REPETIR_TURNO y al menos una carta Ãºtil adicional, usarlo
             if (tieneRepetirTurno && (tieneSacarPuntos || tieneSumarPuntos))
                 cartaTirada = obtenerCartaRepetirTurno(mano);
             // Luego priorizar sacar puntos al oponente
@@ -669,7 +672,7 @@ tCarta* IADificil(const tPila *historialJugadas, const tPlayer *humano, const tP
             // Luego sumar puntos propios
             else if (tieneSumarPuntos)
                 cartaTirada = cartaQueSumaMasPuntos(mano);
-            // Último recurso: REPETIR_TURNO aunque no tenga cartas muy útiles
+            // Ãšltimo recurso: REPETIR_TURNO aunque no tenga cartas muy Ãºtiles
             else if (tieneRepetirTurno)
                 cartaTirada = obtenerCartaRepetirTurno(mano);
         }
