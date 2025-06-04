@@ -32,7 +32,7 @@ Se quiere probar qué pasa si durante una partida se trata de jugar un efecto ne
 Se espera que al ejecutar el programa no haya cambios en los puntajes del jugador.  
 
 **Salida obtenida:**  
-![Caso 2](img/caso2.png)
+![Caso 2](fotoPruebas/foto2.jpg)
 
 ---
 
@@ -44,7 +44,7 @@ Se quiere probar qué pasa si durante una partida se juega una carta de repetir 
 Se espera que el jugador obtenga una nueva carta y luego pueda jugar alguna de las tres.  
 
 **Salida obtenida:**  
-![Caso 3](img/caso3.png)
+![Caso 3](fotoPruebas/foto3.jpg)
 
 ---
 
@@ -56,7 +56,7 @@ Se quiere probar si el programa detecta cuando un jugador ha ganado.
 Se espera que se muestre por consola el ganador aclarando que ha ganado.  
 
 **Salida obtenida:**  
-![Caso 4](img/caso4.png)
+![Caso 4](fotoPruebas/foto4.jpg)
 
 ---
 
@@ -68,7 +68,7 @@ Se quiere probar si el programa descuenta los puntos acorde al efecto negativo d
 Se espera que se muestren por consola los puntos descontados al jugador correspondiente.  
 
 **Salida obtenida:**  
-![Caso 5](img/caso5.png)
+![Caso 5](fotoPruebas/foto5.jpg)
 
 ---
 
@@ -80,7 +80,7 @@ Se quiere probar si la IA en nivel difícil detecta que debe usar la carta "repe
 Se espera que la IA juegue la carta de repetir y luego use otra carta útil.  
 
 **Salida obtenida:**  
-![Caso 6](img/caso6.png)
+![Caso 6](fotoPruebas/foto6.jpg)
 
 ---
 
@@ -92,7 +92,7 @@ Se quiere probar si en la partida al jugar la carta espejo esta revierte el efec
 Se espera que el jugador que jugó la carta espejo recupere sus puntos y el otro pierda esa misma cantidad.  
 
 **Salida obtenida:**  
-![Caso 7](img/caso7.png)
+![Caso 7](fotoPruebas/foto7.jpg)
 
 ---
 
@@ -104,7 +104,7 @@ Se quiere probar si al jugar la carta espejo, el otro jugador puede contrarresta
 Se espera que el último jugador que juegue Espejo no reciba efectos negativos, y que el efecto negativo sea revertido al primer jugador.  
 
 **Salida obtenida:**  
-![Caso 8](img/caso8.png)
+![Caso 8](fotoPruebas/foto8.jpg)
 
 ---
 
@@ -116,4 +116,4 @@ Se quiere probar si, al quedarse sin cartas durante una partida, el sistema lo d
 Se espera que se muestre un mensaje por consola y que la partida continúe.  
 
 **Salida obtenida:**  
-![Caso 9](img/caso9.png)
+![Caso 9](fotoPruebas/foto9.jpg)
