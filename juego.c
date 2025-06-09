@@ -50,7 +50,7 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
     //deberia recibir el jugador con su nombre, tipo de jugador (HUMANO) seteado, y puntaje en 0
     //dificultad es un unsigned char que representa el nivel de la IA, 0 facil, 1 medio, 2 dificil (definido por macro)
     tCarta manoHumano[TAM_MANO],manoCpu[TAM_MANO],*cartaJugada,*manoActual;
-    unsigned char repetirTurno=0;
+    unsigned char repetirTurno=0,jugadorAbandonoPartida=FALSO;
     tLista barajaPrincipal, barajaUsadas;
     tIA juegaIA;
     tJugada jugada;
@@ -91,7 +91,7 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
     jugada.nroTurno=1;
     jugada.jugadorActual.puntaje=0;
     jugada.jugadorRival.puntaje=0;
-    while(jugadorCpu.puntaje<MAX_PUNTOS&&jugadorHumano->puntaje<MAX_PUNTOS)
+    while(jugadorAbandonoPartida==FALSO&&jugadorCpu.puntaje<MAX_PUNTOS&&jugadorHumano->puntaje<MAX_PUNTOS)
     {
         //se realiza la jugada
         if(jugadorActual->idPlayer==JUGADOR_HUMANO)
@@ -144,57 +144,73 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
             {
                 mostrarTablero(manoHumano,manoCpu,&jugada.cartaJugada,jugada);
                 fflush(stdin);
-                printf("\n\t  PRESIONA ENTER PARA ROBAR UNA CARTA...");
-                getchar();
+                jugadorAbandonoPartida=robarCartaOAbandonar();
+                fflush(stdin);
             }
 
         }
 
-        //reponemos la carta en la mano del jugador que tiro recien
-        if(reponerCarta(manoActual,&barajaPrincipal)==BARAJA_VACIA)
+        if(jugadorAbandonoPartida==FALSO)
         {
-            if(reponerBarajaPrincipal(&barajaPrincipal,&barajaUsadas)==SIN_MEMORIA_JUEGO)
+            //reponemos la carta en la mano del jugador que tiro recien
+            if(reponerCarta(manoActual,&barajaPrincipal)==BARAJA_VACIA)
             {
-                liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
-                return SIN_MEMORIA_JUEGO;
+                if(reponerBarajaPrincipal(&barajaPrincipal,&barajaUsadas)==SIN_MEMORIA_JUEGO)
+                {
+                    liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
+                    return SIN_MEMORIA_JUEGO;
+                }
+                system(CLEAR);
+                printf("\n\t  MEZCLANDO EL MAZO...");
+                Sleep(1500);
+                if(mezclarBaraja(&barajaPrincipal)==SIN_MEMORIA_JUEGO)
+                {
+                    liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
+                    return SIN_MEMORIA_JUEGO;
+                }
+                reponerCarta(manoActual,&barajaPrincipal);
             }
-            system("cls");
-            printf("\n\t  MEZCLANDO EL MAZO...");
-            Sleep(1500);
-            if(mezclarBaraja(&barajaPrincipal)==SIN_MEMORIA_JUEGO)
+            //cambiamos de jugador
+            if(!repetirTurno)
             {
-                liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
-                return SIN_MEMORIA_JUEGO;
-            }
-            reponerCarta(manoActual,&barajaPrincipal);
-        }
-        //cambiamos de jugador
-        if(!repetirTurno)
-        {
-            jugadorActual->ultimaCartaNegativaRecibida=SIN_EFECTO_NEGATIVO;
-            if(jugadorActual->idPlayer==JUGADOR_IA)
-            {
-                jugadorActual=jugadorHumano;
-                jugadorContrario=&jugadorCpu;
-                manoActual=manoHumano;
+                jugadorActual->ultimaCartaNegativaRecibida=SIN_EFECTO_NEGATIVO;
+                if(jugadorActual->idPlayer==JUGADOR_IA)
+                {
+                    jugadorActual=jugadorHumano;
+                    jugadorContrario=&jugadorCpu;
+                    manoActual=manoHumano;
+                }
+                else
+                {
+                    jugadorActual=&jugadorCpu;
+                    jugadorContrario=jugadorHumano;
+                    manoActual=manoCpu;
+                }
             }
             else
-            {
-                jugadorActual=&jugadorCpu;
-                jugadorContrario=jugadorHumano;
-                manoActual=manoCpu;
-            }
+                repetirTurno=0;
+            //aumentamos el turno
+            jugada.nroTurno++;
         }
-        else
-            repetirTurno=0;
-        //aumentamos el turno
-        jugada.nroTurno++;
     }
 
+    if(jugadorAbandonoPartida==VERDADERO)
+    {
+        //Si el jugador abandona la partida lo indicamos con un mensaje, generamos el informe, pero no enviaremos
+        //nada a la API ya que no se considera a ninguno como ganador porque la partida no llego a desarollarse.
+        /// se adoptó este criterio, soy consciente de que existen otros.
+        //en el informe indicamos que el jugador abandono la partida.
+        mostrarMensajeRendicion(jugadorHumano);
+        if(generarInforme(&historialJugadas,jugadorAbandonoPartida)!=TODO_OK_JUEGO)
+            return ERROR_ARCH_INFORME;
+        liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
+        return TODO_OK_JUEGO;
+
+    }
     //guardamos el movimiento ganador para devolverlo
     verTope(&historialJugadas,movimientoGanador,sizeof(tJugada));
     mostrarGanador(movimientoGanador);
-    if(generarInforme(&historialJugadas)!=TODO_OK_JUEGO)
+    if(generarInforme(&historialJugadas,jugadorAbandonoPartida)!=TODO_OK_JUEGO)
         return ERROR_ARCH_INFORME;
     liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
 
@@ -202,6 +218,16 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
     enviarDatosJSON(movimientoGanador,configuracion);
 
     return TODO_OK_JUEGO;
+}
+
+unsigned char robarCartaOAbandonar ()
+{
+    char carLeido;
+    puts("PRESIONE ENTER PARA ROBAR UNA CARTA O INGRESE 'X' PARA ABANDONAR LA PARTIDA");
+    carLeido=getchar();
+    if(carLeido=='x'||carLeido=='X')
+        return VERDADERO;
+    return FALSO;
 }
 
 void aplicarEfecto (tCarta cartaJugada, tPlayer *jugadorActual, tPlayer *jugadorContrario, unsigned char *repetirTurno)
@@ -285,20 +311,30 @@ void aplicarEfecto (tCarta cartaJugada, tPlayer *jugadorActual, tPlayer *jugador
     }
 }
 
+void mostrarMensajeRendicion (tPlayer *jugador)
+{
+    system(CLEAR);
+    printf("\n\t     ==============PARTIDA FINALIZADA==================\n");
+    printf("El jugador %s ha decidido abandonar la partida. :(\n",jugador->nya);
+    puts("===============================================================");
+    pausarConsola();
+    system(CLEAR);
+}
+
 void mostrarGanador(tJugada *movimientoGanador)
 {
-    system("cls");
+    system(CLEAR);
     printf("\n\t     ==============PARTIDA FINALIZADA==================\n");
     printf("\n\t Ganador: %s con %d puntos en el turno nro %d con la carta %s.\n",movimientoGanador->jugadorActual.nya,movimientoGanador->jugadorActual.puntaje,movimientoGanador->nroTurno,obtenerNombreCarta(movimientoGanador->cartaJugada));
     if(movimientoGanador->jugadorActual.idPlayer==JUGADOR_IA)
         printf("\n\t     ==========MAS SUERTE LA PROXIMA (:/)==============\n\n\n\n");
     else
         printf("\n\t     =============FELICITACIONES %s==============\n\n\n\n",movimientoGanador->jugadorActual.nya);
-    system("pause");
-    system("cls");
+    pausarConsola();
+    system(CLEAR);
 }
 
-int generarInforme (tPila *historialJugadas)
+int generarInforme (tPila *historialJugadas, unsigned char jugadorAbandonoPartida)
 {
     FILE *informe;
     tPila pilaInvertida;
@@ -332,8 +368,11 @@ int generarInforme (tPila *historialJugadas)
         fprintf(informe,"[TURNO %d] %s jugo %s -> %s: %d | %s: %d | Efecto Activo: %s\n",jugadaBuffer.nroTurno,
                 jugadaBuffer.jugadorActual.nya,obtenerNombreCarta(jugadaBuffer.cartaJugada),jugadaBuffer.jugadorActual.nya,jugadaBuffer.jugadorActual.puntaje,
                 jugadaBuffer.jugadorRival.nya,jugadaBuffer.jugadorRival.puntaje,obtenerNombreCarta(jugadaBuffer.jugadorActual.ultimaCartaNegativaRecibida));
-    fprintf(informe,"-----------------------------\nGanador: %s | Puntos: %d\nPerdedor: %s | Puntos: %d",jugadaBuffer.jugadorActual.nya,jugadaBuffer.jugadorActual.puntaje,
+    if(jugadorAbandonoPartida==FALSO)
+        fprintf(informe,"-----------------------------\nGanador: %s | Puntos: %d\nPerdedor: %s | Puntos: %d",jugadaBuffer.jugadorActual.nya,jugadaBuffer.jugadorActual.puntaje,
             jugadaBuffer.jugadorRival.nya,jugadaBuffer.jugadorRival.puntaje);
+    else
+        fprintf(informe,"-----------------------------\nEl Jugador %s abandono la partida.\n",jugadaBuffer.jugadorActual.nya);
     fclose(informe);
     return TODO_OK_JUEGO;
 }
@@ -903,5 +942,5 @@ void mostrarErrorDoce(char codError)
         puts("Hubo un error desconocido durante el juego.");
         break;
     };
-    system("pause");
+    pausarConsola();
 }

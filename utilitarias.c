@@ -26,15 +26,15 @@ int menu(tConfigApi* configuracion)
     {
         case 'A':
             {
-                system("cls");
+                system(CLEAR);
                 /// SELECCION DE LA DIFICULTAD:
                 printf("\nDificultad de la IA:\n");
                 printf("\n\t- FACIL\n\n\t- MEDIO\n\n\t- DIFICIL\n");
                 opcionDificultad = obtenerOpcionDeDificultadIA();
-                system("cls");
+                system(CLEAR);
                 /// INGRESO DEL NOMBRE DEL JUGADOR:
                 ingresarJugadorNombreYApellido(&jugador);
-                system("cls");
+                system(CLEAR);
                 estadoDoce=jugarDoce(&jugador,opcionDificultad,&movimientoGanador,configuracion);
                 if(estadoDoce!=TODO_OK_JUEGO)
                     mostrarErrorDoce(estadoDoce);
@@ -43,7 +43,7 @@ int menu(tConfigApi* configuracion)
             }
         case 'B':
             {
-                system("cls");
+                system(CLEAR);
                 ///Obtenemos los datos de la Api para realizar el ranking.
                 if(obtenerRanking(&listaRanking, configuracion))
                 {
@@ -86,7 +86,7 @@ void ingresarJugadorNombreYApellido(tPlayer* jugador)
 
 int mostrarTablero(tCarta* manoJugador,tCarta* manoIA,tCarta* ultimaCartaJugada, tJugada jugada)
 {
-    system("cls");
+    system(CLEAR);
     printf("\t     #===========================================#\n");
     printf("\t                  TABLERO DE JUEGO\n");
     printf("\t     #===========================================#\n\n\n");
@@ -347,4 +347,9 @@ int parsearJugadores(tRespuesta *res, tJugadorAPI *jugador)
 
     *p = '\0';
     return 1;
+}
+
+void pausarConsola() {
+    printf("Presiona Enter para continuar...");
+    while (getchar() != '\n');  // Espera a que aprieten Enter
 }

@@ -72,6 +72,8 @@ int crearArchivo(const char*path);
 int bajarArchLista(const char* path, tLista *pl);
 
 int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimientoGanador,tConfigApi* configuracion);
+unsigned char robarCartaOAbandonar ();
+void mostrarMensajeRendicion (tPlayer *jugador);
 void mostrarCarta (const void *dato);
 void insertarCartaEnMano(tCarta *mano, const tCarta *cartaAInsertar, unsigned pos);
 tIA setearIA(unsigned char dificultad, char *nombreIa);
@@ -87,7 +89,7 @@ char reponerCarta (tCarta *mano, tLista *barajaPrincipal);
 void liberarMemoriaEstructuras (tLista *barajaPrincipal, tLista *barajaUsadas, tPila *historialJugadas);
 char reponerBarajaPrincipal (tLista *barajaPrincipal, tLista *barajaUsadas);
 int mezclarBaraja(tLista *baraja);
-int generarInforme (tPila *historialJugadas);
+int generarInforme (tPila *historialJugadas, unsigned char jugadorAbandonoPartida);
 void mostrarGanador(tJugada *movimientoGanador);
 void aplicarEfecto (tCarta cartaJugada, tPlayer *jugadorActual, tPlayer *jugadorContrario, unsigned char *repetirTurno);
 unsigned char existeTipoDeCartaEnMano (const tCarta *mano, char tipoCarta);

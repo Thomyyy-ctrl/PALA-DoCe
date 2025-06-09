@@ -1,12 +1,19 @@
 #ifndef FIRMAUTILITARIAS_H_INCLUDED
 #define FIRMAUTILITARIAS_H_INCLUDED
 
+#ifdef _WIN32
+    #define CLEAR "cls"
+#else
+    #define CLEAR "clear"
+#endif
+
 #include "firmaJuego.h"
 #include "firmaConexion.h"
 #define ARCHIVO_CONFIG 1
 #define TODO_OK 1
 #define ERROR_ARCH 2
 #define CARTAS 3
+
 
 int menu(tConfigApi* configuracion);
 char obtenerOpcionDeMenu();
@@ -15,6 +22,7 @@ int subirDatosApi(tConfigApi* configuracion);
 int obtenerRanking(tLista* listaRanking,tConfigApi* configuracion);
 void imprimirEncabezadoRanking();
 int parsearJugadores(tRespuesta *res, tJugadorAPI *jugador);
+void pausarConsola();
 
 ///AGREGADO:
 int mostrarTablero(tCarta* manoJugador,tCarta* manoIA,tCarta* ultimaCartaJugada,tJugada jugada);

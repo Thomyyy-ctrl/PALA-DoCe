@@ -16,9 +16,9 @@ int main(int arg,char** arg2)
 
     while(menu(&configuracion))
     {
-        system("cls");
+        system(CLEAR);
     }
-    system("cls");
+    system(CLEAR);
 
     return TODO_OK;
 }
