@@ -195,7 +195,7 @@ int obtenerCartaDeLaMano()
         {
             x = ir.Event.MouseEvent.dwMousePosition.X;
             y = ir.Event.MouseEvent.dwMousePosition.Y;
-            //printf("x: %d  y: %d\n", x,y);
+            //printf("%d,%d\n",x,y);
             if(y >=13 && y <=15)
             {
                 if(x>=16 && x<=27)
@@ -326,23 +326,23 @@ const int compararJugadoresApi(const void* a, const void* b)
 }
 int parsearJugadores(tRespuesta *res, tJugadorAPI *jugador)
 {
+    //modificado porque nuestra API enviaba la respuesta en formato partidasGanadas , nombreJugador
+    //la API del TP lo envia como nombreJugador , partidasGanadas.
+    //revisar cambios, creo que estan correctos - Nico
     char *p = strrchr(res->info, '}');
 
     if(!p)
         return 0;
 
-    p--;
     *p = '\0';
-    p = strrchr(res->info, ',');
-    p = strchr(p, ':');
-    sscanf(p + 2, "%s", jugador->nombre);
+    p = strrchr(res->info, ':');
+    sscanf(p + 1, "%u", &jugador->gano);
     p = strrchr(res->info, ',');
 
-    p++;
+    p--;
     *p = '\0';
-    p = strrchr(res->info, '{');
-    p = strchr(p, ':');
-    sscanf(p + 1, "%u", &jugador->gano);
+    p = strrchr(res->info, ':');
+    sscanf(p + 2, "%s", jugador->nombre);
     p = strrchr(res->info, '{');
 
     *p = '\0';
