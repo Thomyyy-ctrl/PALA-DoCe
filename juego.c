@@ -64,9 +64,9 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
     crearPila(&historialJugadas);
     //cargamos las cartas
     if(crearArchivo(PATH_CARTAS)!=TODO_OK_JUEGO)
-        return ERROR_ARCH_CARTAS;
+        return ERROR_ARCH_CARTAS; ///no hace falta liberar memoria ya que no se cargaron las estructuras
     if(bajarArchLista(PATH_CARTAS,&barajaPrincipal)!=TODO_OK_JUEGO)
-        return ERROR_ARCH_CARTAS;
+        return ERROR_ARCH_CARTAS; ///no hace falta liberar memoria ya que no se cargaron las estructuras
     //hacemos la mezcla inicial
     mezclarBaraja(&barajaPrincipal);
 
@@ -202,7 +202,10 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
         //en el informe indicamos que el jugador abandono la partida.
         mostrarMensajeRendicion(jugadorHumano);
         if(generarInforme(&historialJugadas,jugadorAbandonoPartida)!=TODO_OK_JUEGO)
+        {
+            liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
             return ERROR_ARCH_INFORME;
+        }
         liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
         return TODO_OK_JUEGO;
 
@@ -211,7 +214,10 @@ int jugarDoce(tPlayer *jugadorHumano, unsigned char dificultad, tJugada *movimie
     verTope(&historialJugadas,movimientoGanador,sizeof(tJugada));
     mostrarGanador(movimientoGanador);
     if(generarInforme(&historialJugadas,jugadorAbandonoPartida)!=TODO_OK_JUEGO)
+    {
+        liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
         return ERROR_ARCH_INFORME;
+    }
     liberarMemoriaEstructuras(&barajaPrincipal,&barajaUsadas,&historialJugadas);
 
     //Subo el resultado de la partida del jugador contra la IA
