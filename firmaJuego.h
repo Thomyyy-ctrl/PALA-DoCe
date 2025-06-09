@@ -11,7 +11,7 @@
 #define TAM_BUFFER_FECHA 25
 
 ///PUNTOS A ALCANZAR POR PARTIDA
-#define MAX_PUNTOS 2
+#define MAX_PUNTOS 12
 
 #define HEADER_INFORME "informe-juego_"
 #define PATH_CARTAS "cartas.dat"
