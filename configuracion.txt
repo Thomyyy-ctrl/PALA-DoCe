@@ -1,1 +1,1 @@
-https://algoritmos-api.azurewebsites.net/api/doce|lista
+https://algoritmos-api.azurewebsites.net/api/doce | lista
