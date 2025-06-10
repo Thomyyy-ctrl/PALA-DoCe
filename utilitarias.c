@@ -290,7 +290,6 @@ int obtenerRanking(tLista* lista,tConfigApi* configuracion)
     tJugadorAPI jugador;
     tRespuesta resAPI  = {NULL, 0};
     char pathGet[TAM_MAX_JSON];
-
     snprintf(pathGet, sizeof(pathGet), "%s/%s", configuracion->urlApi, configuracion->codGrupo);
 
     res = peticionGET(&resAPI, pathGet);

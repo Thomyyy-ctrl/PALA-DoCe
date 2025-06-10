@@ -7,6 +7,7 @@
 #include <curl/curl.h>
 #define TAM_MAX_JSON 1000
 #define TAM_CAD 100
+#define CONF_API_FORMATO_CON_ESPACIOS "%s | %s"
 
 typedef struct {
     char nombre[TAM_CAD];

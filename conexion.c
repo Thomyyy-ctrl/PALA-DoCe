@@ -118,7 +118,7 @@ int obtenerConfiguracionApi(char* path, tConfigApi* conf)
         return ERROR_ARCH;
 
     fgets(cadAux,TAM_MAX_JSON,ap);
-    sscanf(cadAux,"%[^|]|%s",conf->urlApi,conf->codGrupo);
+    sscanf(cadAux,CONF_API_FORMATO_CON_ESPACIOS,conf->urlApi,conf->codGrupo);
 
     return TODO_OK;
 }
