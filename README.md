@@ -55,7 +55,7 @@ Al iniciar el juego, aparecerá un menú con 3 opciones, que se seleccionan con 
    - el mazo cuenta con 40 cartas.Por ende, Si no quedan mas cartas que tomar se barajan las cartas lanzadas y se sigue con el juego.
    - Cada jugador tendrá un mano de cartas.
    - El jugador debe seleccionar la carta que quiera lanzar con el **CURSOR DEL MOUSE**.  
-   - Una vez lanzada la carta debe presionar **ENTER** para tomar otra carta del tope del mazo.    
+   - Una vez lanzada la carta debe presionar **ENTER** para tomar otra carta del tope del mazo o ingresar **X** con el teclado para abandonar la partida  
    - La IA jugará automáticamente después de cada turno del jugador y tomara una carta del tope del mazo tambien.  
    - El juego continúa hasta que alguno de los dos gane la partida, llegando a la cantidad de 12 puntos.  
 5. Se mostrara quien gano y con que carta.  
